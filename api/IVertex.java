@@ -1,7 +1,6 @@
 package in.dream_lab.goffish;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.Collection;
 
 import org.apache.hadoop.io.Writable;
 
@@ -10,14 +9,17 @@ import org.apache.hadoop.io.Writable;
  * @param <V> Vertex value object type
  * @param <E> Edge value object type
  * */
-public interface VertexInterface<V extends Writable, E extends Writable> {
-  long getVertexId();
+public interface IVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable> {
+  I getVertexID();
   
   boolean isRemote();
   
-  Iterator<Edge<V, E>> outEdges();
+  Collection<IEdge<E, J>> outEdges();
   
-  int getPartitionID();
+  //K getSubgraphID(); Seperate interface
+  // TODO: Add bivertex.
   
-  long getSubgraphID();
+  V getValue();
+  
+  void setValue(V value);
 }
