@@ -1,9 +1,6 @@
 package in.dream_lab.goffish;
 
 import java.util.Collection;
-import java.util.List;
-
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 /*TODO: Add IWCSubgraph and ISCSubgraph

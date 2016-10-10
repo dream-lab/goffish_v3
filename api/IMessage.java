@@ -2,7 +2,7 @@ package in.dream_lab.goffish;
 
 import org.apache.hadoop.io.Writable;
 
-public interface IMessage <K extends Writable> {
+public interface IMessage <K extends Writable> extends Writable {
   enum MessageType {
     VERTEX,
     CUSTOM_MESSAGE,

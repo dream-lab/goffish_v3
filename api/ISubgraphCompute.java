@@ -17,22 +17,13 @@
  */
 package in.dream_lab.goffish;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hama.bsp.BSPPeer;
 
 
 public interface ISubgraphCompute <S extends Writable, V extends Writable, E extends Writable, M extends Writable, I extends Writable, J extends Writable, K extends Writable> {
   
-  ISubgraph<S, V, E, I, J, K> getSubgrpah();
+  ISubgraph<S, V, E, I, J, K> getSubgraph();
   
   void voteToHalt();
 

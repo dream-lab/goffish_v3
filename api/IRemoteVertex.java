@@ -14,7 +14,7 @@ public interface IRemoteVertex<V extends Writable, E extends Writable, I extends
   
   boolean isRemote();
   
-  Collection<IEdge<E, I, J>> outEdges();
+  Collection<IEdge<E, J>> outEdges();
   
   V getValue();
   
