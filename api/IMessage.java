@@ -2,7 +2,7 @@ package in.dream_lab.goffish;
 
 import org.apache.hadoop.io.Writable;
 
-public interface IMessage <K extends Writable> extends Writable {
+public interface IMessage <K extends Writable, M extends Writable> extends Writable {
   enum MessageType {
     VERTEX,
     CUSTOM_MESSAGE,
@@ -11,7 +11,7 @@ public interface IMessage <K extends Writable> extends Writable {
   
   MessageType getMessageType();        // Enum: vertex, custom-message, messagelist.
   
-  K getSubgraphID();
+  K getSubgraphID(); // Auto filled by framework
   
-  Writable getMessage();
+  M getMessage(); // User defined type 
 }

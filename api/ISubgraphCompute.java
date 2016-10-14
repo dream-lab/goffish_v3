@@ -29,11 +29,11 @@ public interface ISubgraphCompute <S extends Writable, V extends Writable, E ext
 
   long getSuperStep();
 
-  void compute(Collection<M> messages);
+  void compute(Collection<IMessage<K, M>> messages);
   
   void sendMessage(K subgraphID, M message);
   
-  void sendToAll(M message);
+  void sendToAll(M message); // auto fill subgraph ID on send or receive
   
   void sendToNeighbors(M message);
   
