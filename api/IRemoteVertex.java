@@ -21,8 +21,7 @@ import java.util.Collection;
 
 import org.apache.hadoop.io.Writable;
 
-/* Defines Vertex interface. Could be used to define multiple graph representation,
- * e.g: adjacency list, adjacency set.
+/* Defines remote vertex interface.
  * @param <V> Vertex value object type
  * @param <E> Edge value object type
  * */
