@@ -21,13 +21,11 @@ import org.apache.hadoop.io.Writable;
 
 public interface IEdge<E extends Writable, I extends Writable, J extends Writable> {
   
-  public J getEdgeID();
+  J getEdgeID();
   
-  public I getSinkVertexID();
+  I getSinkVertexID();
   
-  I getSink();
+  E getValue();
   
-  public E getValue();
-  
-  public void setValue(E value);
+  void setValue(E value);
 }
