@@ -19,9 +19,11 @@ package in.dream_lab.goffish;
 
 import org.apache.hadoop.io.Writable;
 
-public interface IEdge<E extends Writable, J extends Writable> {
+public interface IEdge<E extends Writable, I extends Writable, J extends Writable> {
   
   J getEdgeID();
+  
+  I getSink();
   
   public E getValue();
   
