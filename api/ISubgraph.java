@@ -36,11 +36,11 @@ public interface ISubgraph<S extends Writable, V extends Writable, E extends Wri
   
   long localVertexCount();
 
-  Collection<IVertex<V, E, I, J>> getVertices();
+  Iterable<IVertex<V, E, I, J>> getVertices();
   
-  Collection<IVertex<V, E, I, J>> getLocalVertices();
+  Iterable<IVertex<V, E, I, J>> getLocalVertices();
   
-  Collection<IRemoteVertex<V, E, I, J, K>> getRemoteVertices();
+  Iterable<IRemoteVertex<V, E, I, J, K>> getRemoteVertices();
   
   void setValue(S value);
   
