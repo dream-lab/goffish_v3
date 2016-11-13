@@ -25,6 +25,8 @@ import org.apache.hadoop.io.Writable;
  * e.g: adjacency list, adjacency set.
  * @param <V> Vertex value object type
  * @param <E> Edge value object type
+ * @param <I> Vertex ID type
+ * @param <J> Edge ID type
  * */
 public interface IVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable> {
   I getVertexID();
