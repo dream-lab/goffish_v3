@@ -6,9 +6,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,32 +20,38 @@ package in.dream_lab.goffish.sample;
 
 import java.io.IOException;
 
+import in.dream_lab.goffish.LongTextAdjacencyListReader;
+import in.dream_lab.goffish.NonSplitTextInputFormat;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hama.HamaConfiguration;
-import org.apache.hama.bsp.TextInputFormat;
 import org.apache.hama.bsp.TextOutputFormat;
 
 import in.dream_lab.goffish.GraphJob;
 import in.dream_lab.goffish.utils.LongArrayListWritable;
 
 public class TriangleCountJob {
-  
+
   public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
-    
+
     HamaConfiguration conf = new HamaConfiguration();
-    GraphJob pageJob = new GraphJob(conf, TriangleCount.class);
-    pageJob.setJobName("Triangle Count");
-    pageJob.setInputFormat(TextInputFormat.class);
-    pageJob.setInputKeyClass(LongWritable.class);
-    pageJob.setInputValueClass(LongWritable.class);
-    pageJob.setOutputFormat(TextOutputFormat.class);
-    pageJob.setOutputKeyClass(LongWritable.class);
-    pageJob.setOutputValueClass(LongWritable.class);
-    pageJob.setMaxIteration(2);
-    pageJob.setInputPath(new Path(args[0]));
-    pageJob.setOutputPath(new Path(args[1]));
-    pageJob.setGraphMessageClass(LongArrayListWritable.class);
-    pageJob.waitForCompletion(true);
+    GraphJob job = new GraphJob(conf, TriangleCount.class);
+    job.setJobName("Triangle Count");
+    job.setInputKeyClass(LongWritable.class);
+    job.setInputValueClass(LongWritable.class);
+    job.setOutputFormat(TextOutputFormat.class);
+    job.setOutputKeyClass(LongWritable.class);
+    job.setOutputValueClass(LongWritable.class);
+    job.setMaxIteration(2);
+    job.setInputPath(new Path(args[0]));
+    job.setOutputPath(new Path(args[1]));
+    job.setGraphMessageClass(LongArrayListWritable.class);
+
+    /* Reader configuration */
+    job.setInputFormat(NonSplitTextInputFormat.class);
+    job.setInputReaderClass(LongTextAdjacencyListReader.class);
+
+    // Blocks till job completed
+    job.waitForCompletion(true);
   }
 }

@@ -19,30 +19,16 @@ package in.dream_lab.goffish;
 
 import java.io.IOException;
 
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hama.Constants;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPJob;
-import org.apache.hama.bsp.Combiner;
-import org.apache.hama.bsp.HashPartitioner;
 import org.apache.hama.bsp.Partitioner;
-import org.apache.hama.bsp.BSPJob.JobState;
-import org.apache.hama.bsp.PartitioningRunner.RecordConverter;
-import org.apache.hama.bsp.message.MessageManager;
-import org.apache.hama.bsp.message.OutgoingMessageManager;
-import org.apache.hama.bsp.message.queue.MessageQueue;
-
-import com.google.common.base.Preconditions;
 
 import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.api.ISubgraphCompute;
 import in.dream_lab.goffish.humus.api.IReader;
-import in.dream_lab.goffish.utils.LongArrayListWritable;
 
 public class GraphJob extends BSPJob {
   
@@ -55,6 +41,9 @@ public class GraphJob extends BSPJob {
   public final static String EDGE_VALUE_CLASS_ATTR = "in.dream_lab.goffish.edgevalue.class";
   public final static String SUBGRAPH_ID_CLASS_ATTR = "in.dream_lab.goffish.subgraphid.class";
   public final static String SUBGRAPH_VALUE_CLASS_ATTR = "in.dream_lab.goffish.subgraphvalue.class";
+  public final static String READER_CLASS_ATTR = "in.dream_lab.goffish.reader.class";
+  
+  public final static String INITIAL_VALUE = "in.dream_lab.goffish.initialvalue";
   
   public GraphJob(HamaConfiguration conf, Class<? extends SubgraphCompute> exampleClass)
       throws IOException {
@@ -65,7 +54,8 @@ public class GraphJob extends BSPJob {
     conf.setClass(SUBGRAPH_COMPUTE_CLASS_ATTR, exampleClass, SubgraphCompute.class);
     this.setBspClass(GraphJobRunner.class);
     this.setJarByClass(exampleClass);
-    this.setPartitioner(HashPartitioner.class);
+    setInputFormat(NonSplitTextInputFormat.class);
+    //this.setPartitioner(HashPartitioner.class);
   }
 
   @Override
@@ -154,8 +144,7 @@ public class GraphJob extends BSPJob {
    */
   public void setInputReaderClass(
       @SuppressWarnings("rawtypes") Class<? extends IReader> cls) {
-    conf.setClass(Constants.RUNTIME_PARTITION_RECORDCONVERTER, cls,
-        IReader.class);
+    conf.setClass(READER_CLASS_ATTR, cls, IReader.class);
   }
 
   /**
@@ -164,6 +153,16 @@ public class GraphJob extends BSPJob {
    */
   public void setMaxIteration(int maxIteration) {
     conf.setInt("hama.graph.max.iteration", maxIteration);
+  }
+  
+  /**
+   * Sets the initial value that is passed to the constructor of the application
+   * at runtime
+   * 
+   * @param input
+   */
+  public void setInitialInput(String input) {
+    conf.set(INITIAL_VALUE, input);
   }
   
   @Override

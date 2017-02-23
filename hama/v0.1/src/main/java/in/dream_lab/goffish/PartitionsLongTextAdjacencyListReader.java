@@ -23,24 +23,23 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSPPeer;
 import org.apache.hama.bsp.BSPPeerImpl;
+import org.apache.hama.bsp.Partitioner;
 import org.apache.hama.bsp.sync.SyncException;
 import org.apache.hama.commons.util.KeyValuePair;
 import org.apache.hama.util.ReflectionUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONValue;
 
 import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
@@ -54,48 +53,52 @@ import in.dream_lab.goffish.humus.api.IReader;
 import in.dream_lab.goffish.utils.DisjointSets;
 import in.dream_lab.goffish.api.IMessage;
 
-/*
- * Reads the graph from JSON format
- * [srcid,pid, srcvalue, [[sinkid1,edgeid1,edgevalue1], [sinkid2,edgeid2,edgevalue2] ... ]] 
+
+/* Reads graph in the adjacency list format:
+ * VID PartitionID Sink1 Sink2 ...
  */
-
-public class LongTextJSONReader<S extends Writable, V extends Writable, E extends Writable, K extends Writable, M extends Writable>
-    implements
-    IReader<Writable, Writable, Writable, Writable, S, V, E, LongWritable, LongWritable, LongWritable> {
-
-  HamaConfiguration conf;
+public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends Writable, E extends Writable, K extends Writable, M extends Writable>
+ implements IReader <Writable, Writable, Writable, Writable, S, V, E, LongWritable, LongWritable, LongWritable> {
+  
+  public static final Log LOG = LogFactory.getLog(PartitionsLongTextAdjacencyListReader.class);
+  
+  //TODO : Change to long
   Map<LongWritable, IVertex<V, E, LongWritable, LongWritable>> vertexMap;
   BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer;
   private Map<K, Integer> subgraphPartitionMap;
+  //TODO : Change to Long from LongWritable
   private Map<LongWritable, LongWritable> vertexSubgraphMap;
-
-  public LongTextJSONReader(
-      BSPPeerImpl<Writable, Writable, Writable, Writable, Message<K, M>> peer,
-      HashMap<K, Integer> subgraphPartitionMap) {
+  
+  public PartitionsLongTextAdjacencyListReader(BSPPeerImpl<Writable, Writable, Writable, Writable, Message<K, M>> peer,
+                                     HashMap<K, Integer> subgraphPartitionMap) {
     this.peer = peer;
     this.subgraphPartitionMap = subgraphPartitionMap;
-    this.conf = peer.getConfiguration();
     this.vertexSubgraphMap = new HashMap<LongWritable, LongWritable>();
   }
-
+  
+  
+  /*
+   * Returns the list of subgraphs belonging to the current partition 
+   */
   @Override
-  public List<ISubgraph<S, V, E, LongWritable, LongWritable, LongWritable>> getSubgraphs()
+  public  List<ISubgraph<S, V, E, LongWritable, LongWritable, LongWritable>> getSubgraphs()
       throws IOException, SyncException, InterruptedException {
-
-    // Map of partitionID,vertex that do not belong to this partition
+    
     Map<Integer, List<String>> partitionMap = new HashMap<Integer, List<String>>();
-
     vertexMap = new HashMap<LongWritable, IVertex<V, E, LongWritable, LongWritable>>();
-
     // List of edges.Used to create RemoteVertices
     List<IEdge<E, LongWritable, LongWritable>> _edges = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
 
+    long edgeCount = 0;
+    LOG.debug("SETUP Starting " + peer.getPeerIndex() + " Memory: " + Runtime.getRuntime().freeMemory());
+    
     KeyValuePair<Writable, Writable> pair;
     while ((pair = peer.readNext()) != null) {
-      String StringJSONInput = pair.getValue().toString();
-      JSONArray JSONInput = (JSONArray) JSONValue.parse(StringJSONInput);
-
-      int partitionID = Integer.parseInt(JSONInput.get(1).toString());
+      //NOTE: Confirm that data starts from value and not from key.
+      String stringInput = pair.getValue().toString();
+      String vertexValue[] = stringInput.split("\\s+");
+      //LongWritable sourceID = new LongWritable(Long.parseLong(value[0]));
+      int partitionID = Integer.parseInt(vertexValue[1]);
 
       // Vertex does not belong to this partition
       if (partitionID != peer.getPeerIndex()) {
@@ -104,10 +107,22 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
           partitionVertices = new ArrayList<String>();
           partitionMap.put(partitionID, partitionVertices);
         }
-        partitionVertices.add(StringJSONInput);
+        partitionVertices.add(stringInput);
       } else {
-        Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(
-            StringJSONInput);
+        LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
+        Vertex<V, E, LongWritable, LongWritable> vertex;
+        vertex = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+
+        for (int j = 2; j < vertexValue.length; j++) {
+          LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
+          LongWritable edgeID = new LongWritable(
+              edgeCount++ | (((long) peer.getPeerIndex()) << 32));
+          Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
+              edgeID, sinkID);
+          vertex.addEdge(e);
+          _edges.add(e);
+        }
+        
         vertexMap.put(vertex.getVertexID(), vertex);
         _edges.addAll(vertex.outEdges());
       }
@@ -128,16 +143,40 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       }
     }
     
-    //End of first SuperStep
+
+    // End of first superstep
     peer.sync();
     
+    LOG.debug("Second Superstep in Reader " + peer.getPeerIndex() + " Memory: " + Runtime.getRuntime().freeMemory());
+    
     Message<LongWritable, LongWritable> msg;
-    while ((msg = (Message<LongWritable, LongWritable>)peer.getCurrentMessage()) != null) {
-      String JSONVertex = msg.getControlInfo().toString();
-      Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(JSONVertex);
-      vertexMap.put(vertex.getVertexID(), vertex);
-      _edges.addAll(vertex.outEdges());
+    while ((msg = (Message<LongWritable, LongWritable>) peer.getCurrentMessage()) != null) {
+      ControlMessage ctrlMessage = (ControlMessage) msg.getControlInfo();
+      String msgString = ctrlMessage.getVertexValues();
+      // String msgStringArr[] = msgString.split(",");
+      // for (int i = 0; i < msgStringArr.length; i++) {
+      String vertexInfo[] = msgString.split("\\s+");
+      
+      LongWritable vertexID = new LongWritable(Long.parseLong(vertexInfo[0]));
+      Vertex<V, E, LongWritable, LongWritable> source = (Vertex<V, E, LongWritable, LongWritable>) vertexMap
+          .get(vertexID);
+      if (source == null) {
+        source = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+        vertexMap.put(source.getVertexID(), source);
+      }
+      for (int j = 2; j < vertexInfo.length; j++) {
+        LongWritable sinkID = new LongWritable(Long.parseLong(vertexInfo[j]));
+        LongWritable edgeID = new LongWritable(
+            edgeCount++ | (((long) peer.getPeerIndex()) << 32));
+        Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
+            edgeID, sinkID);
+        source.addEdge(e);
+        _edges.add(e);
+      }
     }
+    //}
+    
+    LOG.debug("Creating Remote Vertex Objects");
     
     /* Create remote vertex objects. */
     for (IEdge<E, LongWritable, LongWritable> e : _edges) {
@@ -149,11 +188,13 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       }
     }
     
-    //Direct Copy paste from here
     Partition<S, V, E, LongWritable, LongWritable, LongWritable> partition = new Partition<S, V, E, LongWritable, LongWritable, LongWritable>(peer.getPeerIndex());
+    
+    LOG.debug("Calling formSubgraph()");
     
     formSubgraphs(partition, vertexMap.values());
     
+    LOG.debug("Done with formSubgraph()");
     /*
      * Ask Remote vertices to send their subgraph IDs. Requires 2 supersteps
      * because the graph is directed
@@ -255,7 +296,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     
     return partition.getSubgraphs();
   }
-  
+
   /* takes partition and message list as argument and sends the messages to their respective partition.
    * Needed to send messages just before peer.sync(),as a hama bug causes the program to stall while trying
    * to send and recieve(iterate over recieved message) large messages at the same time
@@ -274,40 +315,8 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       peer.send(peerName, (Message<K, M>) message);
     }
   }
-  
-  @SuppressWarnings("unchecked")
-  Vertex<V, E, LongWritable, LongWritable> createVertex(String JSONString) {
-    JSONArray JSONInput = (JSONArray) JSONValue.parse(JSONString);
 
-    LongWritable sourceID = new LongWritable(
-        Long.valueOf(JSONInput.get(0).toString()));
-    assert (vertexMap.get(sourceID) == null);
 
-    Vertex<V, E, LongWritable, LongWritable> vertex = new Vertex<V, E, LongWritable, LongWritable>(
-        sourceID);
-    //fix this
-    V value = (V) new Text(JSONInput.get(2).toString());
-    
-    vertex.setValue(value);
-
-    JSONArray edgeList = (JSONArray) JSONInput.get(3);
-    for (Object edgeInfo : edgeList) {
-      Object edgeValues[] = ((JSONArray) edgeInfo).toArray();
-      LongWritable sinkID = new LongWritable(
-          Long.valueOf(edgeValues[0].toString()));
-      LongWritable edgeID = new LongWritable(
-          Long.valueOf(edgeValues[1].toString()));
-      //fix this
-      E edgeValue = (E) new Text(edgeValues[2].toString());
-      
-      Edge<E, LongWritable, LongWritable> edge = new Edge<E, LongWritable, LongWritable>(
-          edgeID, sinkID);
-      edge.setValue(edgeValue);
-      vertex.addEdge(edge);
-    }
-    return vertex;
-  }
-  
   /* Forms subgraphs by finding (weakly) connected components. */
   void formSubgraphs(Partition<S, V, E, LongWritable, LongWritable, LongWritable> partition, Collection<IVertex<V, E, LongWritable, LongWritable>> vertices) throws IOException {
     

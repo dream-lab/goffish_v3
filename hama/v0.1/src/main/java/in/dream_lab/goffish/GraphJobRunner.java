@@ -103,7 +103,8 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   private Map<K, Integer> subgraphPartitionMap;
   private static Class<?> SUBGRAPH_CLASS;
   public static Class<? extends Writable> GRAPH_MESSAGE_CLASS;
-  
+  public static Class<? extends IReader> READER_CLASS;
+
   //public static Class<Subgraph<?, ?, ?, ?, ?, ?, ?>> subgraphClass;
   private Map<K, List<IMessage<K, M>>> subgraphMessageMap;
   private List<SubgraphCompute<S, V, E, M, I, J, K>> subgraphs=new ArrayList<SubgraphCompute<S, V, E, M, I, J, K>>();
@@ -114,55 +115,18 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
       throws IOException, SyncException, InterruptedException {
 
-    //System.out.println("BSP Setup");
     setupfields(peer);
-    
-    /*TODO: Read input reader class type from Hama conf. 
-     * FIXME:Make type of Message generic in Reader. */
 
-    Class<?> readerClass = conf.getClass(Constants.RUNTIME_PARTITION_RECORDCONVERTER, LongTextAdjacencyListReader.class, IReader.class);
     List<Object> params = new ArrayList<Object>();
     params.add(peer);
     params.add(subgraphPartitionMap);
+    Object []param = {peer, subgraphPartitionMap};
     
     IReader<Writable, Writable, Writable, Writable, S, V, E, I, J, K> reader = 
-        //ReflectionUtils.newInstance(readerClass, params);
-        (IReader<Writable, Writable, Writable, Writable, S, V, E, I, J, K>)new LongTextAdjacencyListReader<S, V, E, K, M>(peer,subgraphPartitionMap);
-        //(IReader<Writable, Writable, Writable, Writable, S, V, E, I, J, K>)new LongTextJSONReader<>(peer, subgraphPartitionMap);
-    
+        ReflectionUtils.newInstance(READER_CLASS, param);
     for (ISubgraph<S, V, E, I, J, K> subgraph: reader.getSubgraphs()) {
       partition.addSubgraph(subgraph);
     }
-    
-    /*
-     * For Giraph input generator
-     * 
-    int subgraphs = 0;
-    for (ISubgraph<S, V, E, I, J, K> subgraph: reader.getSubgraphs()) {
-      subgraphs++;
-      partition.addSubgraph(subgraph);
-      
-      System.out.print(subgraph.getSubgraphID()+"\t"+peer.getPeerIndex());
-      //to store unique neighbours
-      Map<K,Integer> neighbourSubgraphMap = new HashMap<>();
-      for (IRemoteVertex<V, E, I, J, K> remote : subgraph.getRemoteVertices()) {
-        neighbourSubgraphMap.put(remote.getSubgraphID(), subgraphPartitionMap.get(remote.getSubgraphID()));
-      }
-      for (Map.Entry<K, Integer> entry : neighbourSubgraphMap.entrySet()) {
-        System.out.print("\t"+entry.getKey()+"\t"+entry.getValue());
-      }
-      System.out.println();
-      for (IVertex<V, E, I, J> vertex : subgraph.getLocalVertices()) {
-        System.out.print(vertex.getVertexID()+"\t"+"0");
-        for (IEdge<E, I, J> edges: vertex.outEdges()) {
-          //take care of extra space in the end while comparing
-          System.out.print("\t"+edges.getSinkVertexID());
-        }
-        System.out.println();
-      }
-    }*/
-    //System.out.println(subgraphs);
-    
   }
   
   /*Initialize the  fields*/
@@ -175,15 +139,14 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     this.conf = peer.getConfiguration();
     this.subgraphPartitionMap = new HashMap<K, Integer>();
     this.subgraphMessageMap = new HashMap<K, List<IMessage<K, M>>>();
-    /*subgraphClass = (Class<Subgraph<?, ?, ?, ?, ?, ?, ?>>) conf.getClass(
-        "hama.subgraph.class", Subgraph.class);
-    SUBGRAPH_CLASS = subgraphClass;
-    */
-    //System.out.println("Message type " + conf.get(GraphJob.GRAPH_MESSAGE_CLASS_ATTR));
+    // TODO: Add support for RicherSubgraph
     Class<M> graphMessageClass = (Class<M>) conf.getClass(
         GraphJob.GRAPH_MESSAGE_CLASS_ATTR, IntWritable.class, Writable.class);
     GRAPH_MESSAGE_CLASS = graphMessageClass;
-    
+
+    Class<? extends IReader> readerClass = (Class<? extends IReader>) conf.getClass(
+            GraphJob.READER_CLASS_ATTR, LongTextAdjacencyListReader.class, IReader.class);
+    READER_CLASS = readerClass;
   }
 
    
@@ -191,17 +154,26 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   public final void bsp(
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
       throws IOException, SyncException, InterruptedException {
+
     
-    /*TODO: Make execute subgraphs compute in parallel.
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
-        .newCachedThreadPool();
-    executor.setMaximumPoolSize(64);
-    */
-    
+    //if the application needs any input in the 0th superstep
+    String initialValue = conf.get(GraphJob.INITIAL_VALUE);
     /*
      * Creating SubgraphCompute objects
      */
     for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
+      
+      if (initialValue != null) {
+        Class<? extends SubgraphCompute<S, V, E, M, I, J, K>> subgraphComputeClass = (Class<? extends SubgraphCompute<S, V, E, M, I, J, K>>) conf
+            .getClass(GraphJob.SUBGRAPH_COMPUTE_CLASS_ATTR, MetaGraph.class);
+        Object []params = {initialValue};
+        SubgraphCompute<S, V, E, M, I, J, K> subgraphComputeRunner = ReflectionUtils
+            .newInstance(subgraphComputeClass, params);
+        subgraphComputeRunner.setSubgraph(subgraph);
+        subgraphComputeRunner.init(this);
+        subgraphs.add(subgraphComputeRunner);
+        continue;
+      }
       
       Class<? extends SubgraphCompute<S, V, E, M, I, J, K>> subgraphComputeClass = (Class<? extends SubgraphCompute<S, V, E, M, I, J, K>>) conf
           .getClass(GraphJob.SUBGRAPH_COMPUTE_CLASS_ATTR, MetaGraph.class);
@@ -216,6 +188,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     peer.sync();
     
     while (!globalVoteToHalt) {     
+      
+      LOG.debug("Application SuperStep " + getSuperStepCount());
+      
       List<IMessage<K, M>> messages = new ArrayList<IMessage<K, M>>();
       Message<K, M> msg;
       
@@ -243,7 +218,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         List<IMessage<K, M>> messagesToSubgraph = subgraphMessageMap.get(subgraph.getSubgraph().getSubgraphID());
         if (messagesToSubgraph != null) {
           hasMessages = true;
+        } else {
+          // if null is passed to compute it might give null pointer exception
+          messagesToSubgraph = new ArrayList<>();
         }
+        
         if (!subgraph.hasVotedToHalt() || hasMessages) {
           subgraph.setActive();
           subgraph.compute(messagesToSubgraph);
@@ -258,17 +237,16 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       peer.sync();
       
     }
-
   }
 
   @Override
   public final void cleanup(
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
       throws IOException {
-    //System.out.println("Clean up!");
-    
+
     for (ISubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
-      System.out.println(subgraph.getSubgraph().getValue());
+      System.out.println("Subgraph " + subgraph.getSubgraph().getSubgraphID() + " value: " +
+              subgraph.getSubgraph().getValue());
     }
   }
 
@@ -318,7 +296,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         parseHeartBeat(message);
       }
       else {
-        System.out.println("Invalid transmission type!");
+        LOG.debug("Invalid transmission type!");
       }
       /*
        * TODO: Add implementation for partition message and vertex message(used for graph mutation)
@@ -399,10 +377,6 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   
   long getSuperStepCount() {
     return peer.getCounter(GraphJobCounter.ITERATIONS).getCounter();
-  }
-  
-  int getPartitionID(K subgraphID) {
-    return 0;
   }
   
   /* Master task notifies all the peers to finish bsp as all the subgraphs across all the peers
