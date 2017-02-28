@@ -51,11 +51,11 @@ Follow the steps to install GoFFish
 4. To run the sample, use the following command:
 
     ```
-    hama jar hama-graph-x.x.x-SNAPSHOT.jar in.dream_lab.goffish.sample.XXXJob input-path output-path 
+    hama jar hama-graph-x.x.x-SNAPSHOT-jar-with-dependencies.jar in.dream_lab.goffish.sample.XXXJob input-path output-path 
     ```
 
     where input-path and output-path is the path of the graph in HDFS and path of the     output in HDFS, 	respectively; e.g:
 
     ```
-    hama jar hama-graph-0.7.2-SNAPSHOT.jar in.dream_lab.goffish.sample.ConnectedComponentsJob facebook_graph fbout
+    hama jar hama-graph-0.7.2-SNAPSHOT-jar-with-dependencies.jar in.dream_lab.goffish.sample.ConnectedComponentsJob facebook_graph fbout
     ```
