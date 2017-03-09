@@ -50,12 +50,12 @@ public class RemoteVertex<V extends Writable, E extends Writable, I extends Writ
   }
 
   @Override
-  public Collection<IEdge<E, I, J>> outEdges() {
+  public Collection<IEdge<E, I, J>> getOutEdges() {
     return null;
   }
 
   @Override
-  public I getVertexID() {
+  public I getVertexId() {
     return vertexID;
   }
 
@@ -70,7 +70,7 @@ public class RemoteVertex<V extends Writable, E extends Writable, I extends Writ
   }
 
   @Override
-  public K getSubgraphID() {
+  public K getSubgraphId() {
     return subgraphID;
   }
 

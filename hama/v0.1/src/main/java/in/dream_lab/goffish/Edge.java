@@ -42,12 +42,12 @@ public class Edge<E extends Writable, I extends Writable, J extends Writable> im
   }
   
   @Override
-  public J getEdgeID() {
+  public J getEdgeId() {
     return edgeID;
   }
 
   @Override
-  public I getSinkVertexID() {
+  public I getSinkVertexId() {
     return _sink;
   }
 }

@@ -41,7 +41,7 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   }
   
   @Override
-  public I getVertexID() {
+  public I getVertexId() {
     return vertexID;
   }
   
@@ -51,7 +51,7 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   }
   
   @Override
-  public Collection<IEdge<E, I, J>> outEdges() {
+  public Collection<IEdge<E, I, J>> getOutEdges() {
     return _adjList;
   }
 

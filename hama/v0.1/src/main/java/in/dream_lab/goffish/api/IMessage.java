@@ -27,9 +27,9 @@ public interface IMessage <K extends Writable, M extends Writable> extends Writa
     MESSAGE_LIST
   }
   
-  MessageType getMessageType();        // Enum: vertex, subgraph, custom-message, messagelist.
+  MessageType getMessageType();
   
-  K getSubgraphID(); // Auto filled by framework
+  K getSubgraphId(); // Auto filled by framework
   
   M getMessage(); // User defined type 
 }

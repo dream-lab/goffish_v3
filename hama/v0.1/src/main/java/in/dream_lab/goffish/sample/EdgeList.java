@@ -37,12 +37,12 @@ public class EdgeList extends
   @Override
   public void compute(
       Collection<IMessage<LongWritable, LongWritable>> messages) {
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {
         for (IEdge<LongWritable, LongWritable, LongWritable> e : vertex
-            .outEdges()) {
-          System.out.println(vertex.getVertexID() + "\t" + e.getSinkVertexID());
+            .getOutEdges()) {
+          System.out.println(vertex.getVertexId() + "\t" + e.getSinkVertexId());
         }
       }
       voteToHalt();

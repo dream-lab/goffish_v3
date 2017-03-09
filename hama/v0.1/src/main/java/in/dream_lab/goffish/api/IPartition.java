@@ -21,7 +21,7 @@ import org.apache.hadoop.io.Writable;
 
 public interface IPartition<S extends Writable, V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable>{
   
-  int getPartitionID();
+  int getPartitionId();
   
   void addSubgraph(ISubgraph<S, V, E, I, J, K> subgraph);
   

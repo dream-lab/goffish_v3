@@ -79,7 +79,7 @@ public class Message<K extends Writable, M extends Writable> implements IMessage
   }
 
   @Override
-  public K getSubgraphID() {
+  public K getSubgraphId() {
     return subgraphID;
   }
 

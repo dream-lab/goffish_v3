@@ -143,9 +143,9 @@ public class SingleSourceShortestPath extends
     try {
       // init IDs for logging
       // FIXME: Charith, we need an init() method later on
-      if (getSuperStep() == 0) {
+      if (getSuperstep() == 0) {
         //partitionId = partition.getId();
-        subgraphId = getSubgraph().getSubgraphID().get();
+        subgraphId = getSubgraph().getSubgraphId().get();
         //logFileName = "SP_" + partitionId + "_" + subgraphId + ".log";
       }
 
@@ -157,7 +157,7 @@ public class SingleSourceShortestPath extends
       ///////////////////////////////////////////////////////////
       // First superstep. Get source superstep as input.
       // Initialize distances. calculate shortest distances in subgraph.
-      if (getSuperStep() == 0) {
+      if (getSuperstep() == 0) {
 
         // get input variables from init message
 //        if (packedSubGraphMessages.size() == 0) {
@@ -177,10 +177,10 @@ public class SingleSourceShortestPath extends
         // Note that if it is a remote vertex, we only have an estimate of the
         // distance
         shortestDistanceMap = new HashMap<Long, DistanceParentPair>(
-            (int) getSubgraph().vertexCount());
+            (int) getSubgraph().getVertexCount());
         for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> v : getSubgraph()
             .getVertices()) {
-          shortestDistanceMap.put(v.getVertexID().get(),
+          shortestDistanceMap.put(v.getVertexId().get(),
               new DistanceParentPair(Short.MAX_VALUE, -1));
           if (v.isRemote())
             remoteVertexCount++;
@@ -191,7 +191,7 @@ public class SingleSourceShortestPath extends
         // Update distance to source as 0
         boolean subgraphHasSource = false;
         if (shortestDistanceMap.containsKey(sourceVertexID) && !getSubgraph()
-            .getVertexByID(new LongWritable(sourceVertexID)).isRemote()) {
+            .getVertexById(new LongWritable(sourceVertexID)).isRemote()) {
           shortestDistanceMap.put(sourceVertexID,
               new DistanceParentPair((short) 0, -1));
           subgraphHasSource = true;
@@ -201,7 +201,7 @@ public class SingleSourceShortestPath extends
         if (subgraphHasSource) {
           log("We have the source!");
           IVertex<LongWritable, LongWritable, LongWritable, LongWritable> sourceVertex = getSubgraph()
-              .getVertexByID(new LongWritable(sourceVertexID));
+              .getVertexById(new LongWritable(sourceVertexID));
           rootVertices = new HashSet<>(1);
           rootVertices.add(sourceVertex);
         }
@@ -220,7 +220,7 @@ public class SingleSourceShortestPath extends
         // For directed graphs, it is not easy to find the number of in-boundary
         // vertices.
         rootVertices = new HashSet<>(Math.min(subGraphMessages.size(),
-            (int) getSubgraph().vertexCount()));
+            (int) getSubgraph().getVertexCount()));
 
         // Giraph:SimpleShortestPathsComputation.java:68
         // minDist = Math.min(minDist, message.get());
@@ -245,7 +245,7 @@ public class SingleSourceShortestPath extends
             distanceParent.distance = sinkDistance;
             distanceParent.parent = remoteParent;
             rootVertices
-                .add(getSubgraph().getVertexByID(new LongWritable(sinkVertex)));
+                .add(getSubgraph().getVertexById(new LongWritable(sinkVertex)));
           }
         }
       }
@@ -276,7 +276,7 @@ public class SingleSourceShortestPath extends
             remoteUpdateSet);
 
         log("END diskstras with subgraph local vertices="
-            + (getSubgraph().vertexCount() - remoteVertexCount) + "," + logMsg);
+            + (getSubgraph().getVertexCount() - remoteVertexCount) + "," + logMsg);
 
         // Giraph:SimpleShortestPathsComputation.java:82
         // sendMessage(edge.getTargetVertexId(), new DoubleWritable(distance));
@@ -359,11 +359,11 @@ public class SingleSourceShortestPath extends
         .getVertices()) {
       if (!v.isRemote()) { // print only non-remote vertices
         DistanceParentPair distanceParentPair = shortestDistanceMap
-            .get(v.getVertexID().get());
+            .get(v.getVertexId().get());
         if (distanceParentPair.distance != Short.MAX_VALUE) // print only
                                                             // connected
                                                             // vertices
-          System.out.println(v.getVertexID().get() + "," + distanceParentPair.distance + ","
+          System.out.println(v.getVertexId().get() + "," + distanceParentPair.distance + ","
               + distanceParentPair.parent);
       }
     }
@@ -374,8 +374,8 @@ public class SingleSourceShortestPath extends
     Map<Long, StringBuilder> remoteSubgraphMessageMap = new HashMap<>();
     for (Long remoteVertexID : remoteUpdateSet) {
       IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> remoteVertex = (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable>) getSubgraph()
-          .getVertexByID(new LongWritable(remoteVertexID));
-      long remoteSubgraphId = remoteVertex.getSubgraphID().get();
+          .getVertexById(new LongWritable(remoteVertexID));
+      long remoteSubgraphId = remoteVertex.getSubgraphId().get();
       StringBuilder b = remoteSubgraphMessageMap.get(remoteSubgraphId);
       if (b == null) {
         b = new StringBuilder();
@@ -447,11 +447,11 @@ public class SingleSourceShortestPath extends
     Map<Long, DistanceVertex> localUpdateMap = new HashMap<>();
     for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> rootVertex : rootVertices) {
       DistanceParentPair rootDistanceParentPair = shortestDistanceMap
-          .get(rootVertex.getVertexID().get());
+          .get(rootVertex.getVertexId().get());
       DistanceVertex distanceVertex = new DistanceVertex(rootVertex,
           rootDistanceParentPair.distance);
       localUpdateQueue.add(distanceVertex);
-      localUpdateMap.put(rootVertex.getVertexID().get(), distanceVertex);
+      localUpdateMap.put(rootVertex.getVertexId().get(), distanceVertex);
     }
 
     IVertex<LongWritable, LongWritable, LongWritable, LongWritable> currentVertex;
@@ -466,27 +466,27 @@ public class SingleSourceShortestPath extends
                                                                         // vertex
                                                                         // from
                                                                         // queue
-      localUpdateMap.remove(currentDistanceVertex.vertex.getVertexID().get()); // remote
+      localUpdateMap.remove(currentDistanceVertex.vertex.getVertexId().get()); // remote
                                                                    // vertex
                                                                    // from Map
       localUpdateCount++; // FIXME:TEMPDEL
 
       // get the shortest distance for the current vertex
       currentVertex = currentDistanceVertex.vertex;
-      long currentVertexID = currentVertex.getVertexID().get();
+      long currentVertexID = currentVertex.getVertexId().get();
       int distanceToCurrent = currentDistanceVertex.distance;
 
       // BFS traverse to children of current vertex
       // update their shortest distance if necessary
       // add them to update set if distance has changed
       for (IEdge<LongWritable, LongWritable, LongWritable> e : currentVertex
-          .outEdges()) {
+          .getOutEdges()) {
 
         // get child vertex
-        LongWritable sinkId = e.getSinkVertexID();
+        LongWritable sinkId = e.getSinkVertexId();
         IVertex<LongWritable, LongWritable, LongWritable, LongWritable> childVertex = getSubgraph()
-            .getVertexByID(e.getSinkVertexID());
-        long childVertexID = childVertex.getVertexID().get();
+            .getVertexById(e.getSinkVertexId());
+        long childVertexID = childVertex.getVertexId().get();
         boolean isChildVertexRemote = childVertex.isRemote();
         DistanceParentPair childDistanceParent = shortestDistanceMap
             .get(childVertexID);

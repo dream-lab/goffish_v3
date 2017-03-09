@@ -32,13 +32,13 @@ public interface ISubgraph<S extends Writable, V extends Writable, E extends Wri
   // TODO: add new class for IBiSubgraph
   // TODO: add edge efficient subgraph implementation also
 
-  IVertex<V, E, I, J> getVertexByID(I vertexID);
+  IVertex<V, E, I, J> getVertexById(I vertexID);
 
-  K getSubgraphID();
+  K getSubgraphId();
 
-  long vertexCount();
+  long getVertexCount();
 
-  long localVertexCount();
+  long getLocalVertexCount();
 
   Iterable<IVertex<V, E, I, J>> getVertices();
 
@@ -46,11 +46,11 @@ public interface ISubgraph<S extends Writable, V extends Writable, E extends Wri
 
   Iterable<IRemoteVertex<V, E, I, J, K>> getRemoteVertices();
 
-  Iterable<IEdge<E, I, J>> getEdges();
+  Iterable<IEdge<E, I, J>> getOutEdges();
 
-  IEdge<E, I, J> getEdgeByID(J edgeID);
+  IEdge<E, I, J> getEdgeById(J edgeID);
 
-  void setValue(S value);
+  void setSubgraphValue(S value);
 
-  S getValue();
+  S getSubgraphValue();
 }

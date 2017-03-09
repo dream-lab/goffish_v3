@@ -35,7 +35,7 @@ public interface ISubgraphCompute <S extends Writable, V extends Writable, E ext
   
   void voteToHalt();
 
-  long getSuperStep();
+  long getSuperstep();
 
   void compute(Collection<IMessage<K, M>> messages);
 

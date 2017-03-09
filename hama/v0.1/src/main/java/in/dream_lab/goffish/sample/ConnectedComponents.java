@@ -34,17 +34,17 @@ public class ConnectedComponents extends
   public void compute(
       Collection<IMessage<LongWritable, LongWritable>> messages) {
 
-    if (getSuperStep() == 0) {
-      minSubgraphID = getSubgraph().getSubgraphID().get();
+    if (getSuperstep() == 0) {
+      minSubgraphID = getSubgraph().getSubgraphId().get();
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getRemoteVertices()) {
-        if (minSubgraphID > vertex.getSubgraphID().get()) {
-          minSubgraphID = vertex.getSubgraphID().get();
+        if (minSubgraphID > vertex.getSubgraphId().get()) {
+          minSubgraphID = vertex.getSubgraphId().get();
         }
       }
       LongWritable msg = new LongWritable(minSubgraphID);
       sendToNeighbors(msg);
-      getSubgraph().setValue(new LongWritable(minSubgraphID));
+      getSubgraph().setSubgraphValue(new LongWritable(minSubgraphID));
     } else {
       boolean updated = false;
       for (IMessage<LongWritable, LongWritable> msg : messages) {
@@ -55,7 +55,7 @@ public class ConnectedComponents extends
         }
       }
       if (updated) {
-        getSubgraph().setValue(new LongWritable(minSubgraphID));
+        getSubgraph().setSubgraphValue(new LongWritable(minSubgraphID));
         LongWritable msg = new LongWritable(minSubgraphID);
         sendToNeighbors(msg);
       }

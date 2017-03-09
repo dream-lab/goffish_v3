@@ -29,11 +29,12 @@ import org.apache.hadoop.io.Writable;
  * @param <J> Edge ID type
  * */
 public interface IVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable> {
-  I getVertexID();
-  
+
+  I getVertexId();
+
   boolean isRemote();
   
-  Collection<IEdge<E, I, J>> outEdges();
+  Collection<IEdge<E, I, J>> getOutEdges();
   
   //K getSubgraphID(); Seperate interface
   // TODO: Add bivertex.

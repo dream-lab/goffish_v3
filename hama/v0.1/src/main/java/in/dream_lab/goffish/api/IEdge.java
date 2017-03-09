@@ -26,9 +26,9 @@ import org.apache.hadoop.io.Writable;
  */
 public interface IEdge<E extends Writable, I extends Writable, J extends Writable> {
   
-  J getEdgeID();
+  J getEdgeId();
   
-  I getSinkVertexID();//add getSinkVertex();
+  I getSinkVertexId();//add getSinkVertex();
   						
   
   E getValue();

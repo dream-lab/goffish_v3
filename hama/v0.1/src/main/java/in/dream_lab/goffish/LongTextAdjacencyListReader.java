@@ -110,14 +110,14 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
         vertex.addEdge(e);
       }
 
-      vertexMap.put(vertex.getVertexID().get(), vertex);
+      vertexMap.put(vertex.getVertexId().get(), vertex);
 
     }
 
     /* Create remote vertex objects. */
     for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap.values()) {
-      for (IEdge<E, LongWritable, LongWritable> e : vertex.outEdges()) {
-        LongWritable sinkID = e.getSinkVertexID();
+      for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges()) {
+        LongWritable sinkID = e.getSinkVertexId();
         IVertex<V, E, LongWritable, LongWritable> sink = vertexMap.get(sinkID.get());
         if (sink == null) {
           sink = new RemoteVertex<V, E, LongWritable, LongWritable, LongWritable>(
@@ -146,7 +146,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
     byte partitionIDbytes[] = Ints.toByteArray(peer.getPeerIndex());
     controlInfo.addextraInfo(partitionIDbytes);
     for (IVertex<V, E, LongWritable, LongWritable> v : remoteVertexMap.values()) {
-      byte vertexIDbytes[] = Longs.toByteArray(v.getVertexID().get());
+      byte vertexIDbytes[] = Longs.toByteArray(v.getVertexId().get());
       controlInfo.addextraInfo(vertexIDbytes);
     }
     sendToAllPartitions(question);
@@ -276,11 +276,11 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
 
     // union edge pairs
     for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap.values()) {
-      for (IEdge<E, LongWritable, LongWritable> edge : vertex.outEdges()) {
+      for (IEdge<E, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
         IVertex<V, E, LongWritable, LongWritable> sink = vertexMap
-            .get(edge.getSinkVertexID().get());
+            .get(edge.getSinkVertexId().get());
         if (sink == null) {
-          sink = remoteVertexMap.get(edge.getSinkVertexID().get());
+          sink = remoteVertexMap.get(edge.getSinkVertexId().get());
         }
         ds.union(vertex, sink);
       }
@@ -291,7 +291,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
 
     for (Collection<IVertex<V, E, LongWritable, LongWritable>> component : components) {
       LongWritable subgraphID = new LongWritable(
-          subgraphCount++ | (((long) partition.getPartitionID()) << 32));
+          subgraphCount++ | (((long) partition.getPartitionId()) << 32));
       Subgraph<S, V, E, LongWritable, LongWritable, LongWritable> subgraph = new Subgraph<S, V, E, LongWritable, LongWritable, LongWritable>(
           peer.getPeerIndex(), subgraphID);
 
@@ -301,7 +301,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
         // Dont add remote vertices to the VertexSubgraphMap as remote vertex
         // subgraphID is unknown
         if (!vertex.isRemote()) {
-          vertexSubgraphMap.put(vertex.getVertexID(), subgraph.getSubgraphID());
+          vertexSubgraphMap.put(vertex.getVertexId(), subgraph.getSubgraphId());
         }
       }
 

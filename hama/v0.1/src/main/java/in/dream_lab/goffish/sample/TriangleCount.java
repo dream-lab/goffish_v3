@@ -70,39 +70,39 @@ public class TriangleCount extends
   public void compute(Collection<IMessage<LongWritable, LongArrayListWritable>> messageList) {
 
     // Convert adjacency list to adjacency set
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       //trianglesList = new StringBuilder();
       adjSet = new HashMap<Long, Set<Long>>();
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph().getLocalVertices()) {
         Set<Long> adjVertices = new HashSet<Long>();
-        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.outEdges()) {
-          adjVertices.add(edge.getSinkVertexID().get());
+        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
+          adjVertices.add(edge.getSinkVertexId().get());
         }
-        adjSet.put(vertex.getVertexID().get(), adjVertices);
+        adjSet.put(vertex.getVertexId().get(), adjVertices);
       }
       return;
-    } else if (getSuperStep() == 1) {
+    } else if (getSuperstep() == 1) {
       Map<Long, LongArrayListWritable> msg = new HashMap<Long, LongArrayListWritable>();
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {
-        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.outEdges()) {
+        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
           IVertex<LongWritable, LongWritable, LongWritable, LongWritable> adjVertex = 
-              getSubgraph().getVertexByID(edge.getSinkVertexID());
+              getSubgraph().getVertexById(edge.getSinkVertexId());
 
           // Preparing messages to be sent to remote adjacent vertices.
-          if (adjVertex.isRemote() && adjVertex.getVertexID().get() > vertex.getVertexID().get()) {
+          if (adjVertex.isRemote() && adjVertex.getVertexId().get() > vertex.getVertexId().get()) {
             long remoteSubgraphId = ((IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable>)adjVertex)
-                .getSubgraphID().get();
+                .getSubgraphId().get();
             LongArrayListWritable vertexIds = msg.get(remoteSubgraphId);
             if (vertexIds == null) {
               vertexIds = new LongArrayListWritable();
               msg.put(remoteSubgraphId, vertexIds);
             }
-            vertexIds.add(adjVertex.getVertexID());
-            vertexIds.add(vertex.getVertexID());
-            vertexIds.add(vertex.getVertexID());
+            vertexIds.add(adjVertex.getVertexId());
+            vertexIds.add(vertex.getVertexId());
+            vertexIds.add(vertex.getVertexId());
                 
-          } else if (adjVertex.isRemote() || vertex.getVertexID().get() > adjVertex.getVertexID().get())
+          } else if (adjVertex.isRemote() || vertex.getVertexId().get() > adjVertex.getVertexId().get())
             continue;
 
           if (adjVertex.isRemote()) {
@@ -110,12 +110,12 @@ public class TriangleCount extends
           }
           // Counting triangles which have at least two vertices in the same
           // subgraph.
-          for (IEdge<LongWritable, LongWritable, LongWritable> edgeAdjVertex : adjVertex.outEdges()) {
-            IVertex<LongWritable, LongWritable, LongWritable, LongWritable> adjAdjVertex = getSubgraph().getVertexByID(edgeAdjVertex.getSinkVertexID());
+          for (IEdge<LongWritable, LongWritable, LongWritable> edgeAdjVertex : adjVertex.getOutEdges()) {
+            IVertex<LongWritable, LongWritable, LongWritable, LongWritable> adjAdjVertex = getSubgraph().getVertexById(edgeAdjVertex.getSinkVertexId());
             if (adjAdjVertex.isRemote()
-                || adjAdjVertex.getVertexID().get() > adjVertex.getVertexID().get()) {
+                || adjAdjVertex.getVertexId().get() > adjVertex.getVertexId().get()) {
 
-              if (adjSet.get(vertex.getVertexID().get()).contains(adjAdjVertex.getVertexID().get())) {
+              if (adjSet.get(vertex.getVertexId().get()).contains(adjAdjVertex.getVertexId().get())) {
                 triangleCount++;
                 //trianglesList.append(vertex.getVertexID().get() + " " + adjVertex.getVertexID().get()
                   //  + " " + adjAdjVertex.getVertexID().get() + "\n");
@@ -125,19 +125,19 @@ public class TriangleCount extends
         }
       }
       sendPackedMessages(msg);
-    } else if (getSuperStep() == 2) {
+    } else if (getSuperstep() == 2) {
       Map<Long, List<Pair<Long, Long>>> ids = new HashMap<Long, List<Pair<Long, Long>>>();
       unpackMessages(messageList, ids);
 
       Map<Long, LongArrayListWritable> msg = new HashMap<Long, LongArrayListWritable>();
       for (Map.Entry<Long, List<Pair<Long, Long>>> entry : ids.entrySet()) {
-        IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex = getSubgraph().getVertexByID(new LongWritable(entry.getKey()));
+        IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex = getSubgraph().getVertexById(new LongWritable(entry.getKey()));
         List<Pair<Long, Long>> idPairs = entry.getValue();
-        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.outEdges()) {
-          IVertex<LongWritable, LongWritable, LongWritable, LongWritable> adjVertex = getSubgraph().getVertexByID(edge.getSinkVertexID());
-          if (adjVertex.isRemote() && adjVertex.getVertexID().get() > vertex.getVertexID().get()) {
+        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
+          IVertex<LongWritable, LongWritable, LongWritable, LongWritable> adjVertex = getSubgraph().getVertexById(edge.getSinkVertexId());
+          if (adjVertex.isRemote() && adjVertex.getVertexId().get() > vertex.getVertexId().get()) {
             long remoteSubgraphId = ((IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable>)adjVertex)
-                .getSubgraphID().get();
+                .getSubgraphId().get();
             LongArrayListWritable vertexIds = msg.get(remoteSubgraphId);
             if (vertexIds == null) {
               vertexIds = new LongArrayListWritable();
@@ -146,11 +146,11 @@ public class TriangleCount extends
             for (Pair<Long, Long> id : idPairs) {
               LongWritable firstId = new LongWritable(id.first);
               IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> sinkSubgraphID = (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> )
-              getSubgraph().getVertexByID(firstId);
-              if (sinkSubgraphID.getSubgraphID().get() != remoteSubgraphId) {
-                vertexIds.add(adjVertex.getVertexID());
+              getSubgraph().getVertexById(firstId);
+              if (sinkSubgraphID.getSubgraphId().get() != remoteSubgraphId) {
+                vertexIds.add(adjVertex.getVertexId());
                 vertexIds.add(firstId);
-                vertexIds.add(vertex.getVertexID());
+                vertexIds.add(vertex.getVertexId());
               }
             }
           }
@@ -162,10 +162,10 @@ public class TriangleCount extends
       Map<Long, List<Pair<Long, Long>>> ids = new HashMap<Long, List<Pair<Long, Long>>>();
       unpackMessages(messageList, ids);
       for (Map.Entry<Long, List<Pair<Long, Long>>> entry : ids.entrySet()) {
-        IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex = getSubgraph().getVertexByID(new LongWritable(entry.getKey()));
+        IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex = getSubgraph().getVertexById(new LongWritable(entry.getKey()));
         for (Pair<Long, Long> p : entry.getValue()) {
-          for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.outEdges()) {
-            if (edge.getSinkVertexID().get() == p.first) {
+          for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
+            if (edge.getSinkVertexId().get() == p.first) {
               triangleCount++;
               //trianglesList.append(
                //   vertex.getVertexID().get() + " " + p.first + " " + p.second + "\n");
@@ -175,7 +175,7 @@ public class TriangleCount extends
 
       }
     }
-    getSubgraph().setValue(new LongWritable(triangleCount));
+    getSubgraph().setSubgraphValue(new LongWritable(triangleCount));
     voteToHalt();
   }
 

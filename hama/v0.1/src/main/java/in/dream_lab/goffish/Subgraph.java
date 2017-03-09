@@ -42,26 +42,26 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
   }
 
   void addVertex(IVertex<V, E, I, J> v) {
-    _vertexMap.put(v.getVertexID(), v);
+    _vertexMap.put(v.getVertexId(), v);
   }
 
   @Override
-  public IVertex<V, E, I, J> getVertexByID(I vertexID) {
+  public IVertex<V, E, I, J> getVertexById(I vertexID) {
     return _vertexMap.get(vertexID);
   }
 
   @Override
-  public K getSubgraphID() {
+  public K getSubgraphId() {
     return subgraphID;
   }
 
   @Override
-  public long vertexCount() {
+  public long getVertexCount() {
     return _vertexMap.size();
   }
 
   @Override
-  public long localVertexCount() {
+  public long getLocalVertexCount() {
     long localVertexCount = 0;
     for (IVertex<V, E, I, J> v : _vertexMap.values())
       if (!v.isRemote())
@@ -85,12 +85,12 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
   }
 
   @Override
-  public void setValue(S value) {
+  public void setSubgraphValue(S value) {
     _value = value;
   }
 
   @Override
-  public S getValue() {
+  public S getSubgraphValue() {
     return _value;
   }
 
@@ -105,9 +105,9 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
   }
 
   @Override
-  public IEdge<E, I, J> getEdgeByID(J edgeID) {
+  public IEdge<E, I, J> getEdgeById(J edgeID) {
     for (IVertex<V, E, I, J> vertex : _vertexMap.values()) {
-      for (IEdge<E, I, J> vertexEdge : vertex.outEdges()) {
+      for (IEdge<E, I, J> vertexEdge : vertex.getOutEdges()) {
         if (edgeID.equals(vertexEdge)) {
           return vertexEdge;
         }
@@ -117,14 +117,14 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
   }
 
   @Override
-  public Iterable<IEdge<E, I, J>> getEdges() {
+  public Iterable<IEdge<E, I, J>> getOutEdges() {
 
     List<IEdge<E, I, J>> edgeList = new ArrayList<IEdge<E, I, J>>();
 
     for (IVertex<V, E, I, J> vertex : _vertexMap.values()) {
       if (vertex.isRemote())
         continue;
-      for (IEdge<E, I, J> vertexEdge : vertex.outEdges()) {
+      for (IEdge<E, I, J> vertexEdge : vertex.getOutEdges()) {
         edgeList.add(vertexEdge);
       }
     }

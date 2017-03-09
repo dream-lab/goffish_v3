@@ -39,13 +39,13 @@ public class Partition<S extends Writable, V extends Writable, E extends Writabl
   }
   
   @Override
-  public int getPartitionID() {
+  public int getPartitionId() {
     return partitionID;
   }
   
   public void addSubgraph(ISubgraph<S, V, E, I, J, K> subgraph) {
     _subgraphs.add(subgraph);
-    _subgraphMap.put(subgraph.getSubgraphID(), subgraph);
+    _subgraphMap.put(subgraph.getSubgraphId(), subgraph);
   }
   
   public List<ISubgraph<S, V, E, I, J, K>> getSubgraphs() {

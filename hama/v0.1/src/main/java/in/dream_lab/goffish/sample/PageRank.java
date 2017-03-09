@@ -51,16 +51,16 @@ public class PageRank extends
 
   @Override
   public void compute(Collection<IMessage<LongWritable, Text>> messages) {
-    if (getSuperStep() == 0) {
-      _weights = new HashMap<>((int) getSubgraph().vertexCount(), 1f);
-      sums = new HashMap<>((int) getSubgraph().vertexCount(), 1f);
+    if (getSuperstep() == 0) {
+      _weights = new HashMap<>((int) getSubgraph().getVertexCount(), 1f);
+      sums = new HashMap<>((int) getSubgraph().getVertexCount(), 1f);
 
       // initialize weights
       // initialize sums
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getVertices()) {
-        _weights.put(vertex.getVertexID().get(), 1D);
-        sums.put(vertex.getVertexID().get(), new MyDouble());
+        _weights.put(vertex.getVertexId().get(), 1D);
+        sums.put(vertex.getVertexId().get(), new MyDouble());
       }
     }
 
@@ -76,11 +76,11 @@ public class PageRank extends
           continue;
         }
 
-        double delta = _weights.get(vertex.getVertexID().get())
-            / vertex.outEdges().size();
+        double delta = _weights.get(vertex.getVertexId().get())
+            / vertex.getOutEdges().size();
         for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex
-            .outEdges()) {
-          myD = sums.get(edge.getSinkVertexID().get()); // sinkVertexId
+            .getOutEdges()) {
+          myD = sums.get(edge.getSinkVertexId().get()); // sinkVertexId
           myD.d += delta;
         }
       }
@@ -106,32 +106,32 @@ public class PageRank extends
         if (vertex.isRemote()) {
           continue;
         }
-        myD = sums.get(vertex.getVertexID().get());
+        myD = sums.get(vertex.getVertexId().get());
         double pr = 0.15 + 0.85 * myD.d;
-        _weights.put(vertex.getVertexID().get(), pr);
+        _weights.put(vertex.getVertexId().get(), pr);
         // set sum of non-remote vertices to zero here to avoid doing it at
         // start of next superstep
         myD.d = 0d;
       }
     }
 
-    if (getSuperStep() < 30) {
+    if (getSuperstep() < 30) {
 
       // message aggregation
       HashMap<Long, StringBuilder> messageAggregator = new HashMap<>(
-          (int) (getSubgraph().vertexCount()
-              - getSubgraph().localVertexCount()),
+          (int) (getSubgraph().getVertexCount()
+              - getSubgraph().getLocalVertexCount()),
           1f);
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> remoteVertex : getSubgraph()
           .getRemoteVertices()) {
-        StringBuilder b = messageAggregator.get(remoteVertex.getSubgraphID());
+        StringBuilder b = messageAggregator.get(remoteVertex.getSubgraphId());
         if (b == null) {
           b = new StringBuilder();
-          messageAggregator.put(remoteVertex.getSubgraphID().get(), b);
+          messageAggregator.put(remoteVertex.getSubgraphId().get(), b);
         }
 
-        myD = sums.get(remoteVertex.getVertexID().get());
-        b.append(remoteVertex.getVertexID().get()).append(':').append(myD.d)
+        myD = sums.get(remoteVertex.getVertexId().get());
+        b.append(remoteVertex.getVertexId().get()).append(':').append(myD.d)
             .append(':');
         // set sum of remote vertices to zero here to avoid doing it at start of
         // next superstep
@@ -152,8 +152,8 @@ public class PageRank extends
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getVertices()) {
         if (!vertex.isRemote()) {
-          System.out.println(vertex.getVertexID().get() + " "
-              + _weights.get(vertex.getVertexID().get())
+          System.out.println(vertex.getVertexId().get() + " "
+              + _weights.get(vertex.getVertexId().get())
               + System.lineSeparator());
         }
       }

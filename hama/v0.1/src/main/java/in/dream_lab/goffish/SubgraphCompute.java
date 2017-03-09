@@ -38,7 +38,7 @@ public abstract class SubgraphCompute<S extends Writable, V extends Writable, E 
   }
 
   @Override
-  public long getSuperStep() {
+  public long getSuperstep() {
     return runner.getSuperStepCount();
   }
 

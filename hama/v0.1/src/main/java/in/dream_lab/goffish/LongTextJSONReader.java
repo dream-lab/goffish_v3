@@ -108,8 +108,8 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       } else {
         Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(
             StringJSONInput);
-        vertexMap.put(vertex.getVertexID(), vertex);
-        _edges.addAll(vertex.outEdges());
+        vertexMap.put(vertex.getVertexId(), vertex);
+        _edges.addAll(vertex.getOutEdges());
       }
     }
 
@@ -135,13 +135,13 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     while ((msg = (Message<LongWritable, LongWritable>)peer.getCurrentMessage()) != null) {
       String JSONVertex = msg.getControlInfo().toString();
       Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(JSONVertex);
-      vertexMap.put(vertex.getVertexID(), vertex);
-      _edges.addAll(vertex.outEdges());
+      vertexMap.put(vertex.getVertexId(), vertex);
+      _edges.addAll(vertex.getOutEdges());
     }
     
     /* Create remote vertex objects. */
     for (IEdge<E, LongWritable, LongWritable> e : _edges) {
-      LongWritable sinkID = e.getSinkVertexID();
+      LongWritable sinkID = e.getSinkVertexId();
       IVertex<V, E, LongWritable, LongWritable> sink =  vertexMap.get(sinkID);
       if (sink == null) {
         sink = new RemoteVertex<V, E, LongWritable, LongWritable, LongWritable>(sinkID);
@@ -170,7 +170,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     controlInfo.addextraInfo(partitionIDbytes);
     for (IVertex<V, E, LongWritable, LongWritable> v : vertexMap.values()) {
       if (v instanceof RemoteVertex) {
-        byte vertexIDbytes[] = Longs.toByteArray(v.getVertexID().get());
+        byte vertexIDbytes[] = Longs.toByteArray(v.getVertexId().get());
         controlInfo.addextraInfo(vertexIDbytes);
       }
     }
@@ -334,9 +334,9 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     // union edge pairs
     for (IVertex<V, E, LongWritable, LongWritable> vertex : vertices) {
       if (!vertex.isRemote()) {
-        for (IEdge<E, LongWritable, LongWritable> edge : vertex.outEdges()) {
+        for (IEdge<E, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
           IVertex<V, E, LongWritable, LongWritable> sink = vertexMap
-              .get(edge.getSinkVertexID());
+              .get(edge.getSinkVertexId());
           ds.union(vertex, sink);
         }
       }
@@ -347,7 +347,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
 
     for (Collection<IVertex<V, E, LongWritable, LongWritable>> component : components) {
       LongWritable subgraphID = new LongWritable(
-          subgraphCount++ | (((long) partition.getPartitionID()) << 32));
+          subgraphCount++ | (((long) partition.getPartitionId()) << 32));
       Subgraph<S, V, E, LongWritable, LongWritable, LongWritable> subgraph = new Subgraph<S, V, E, LongWritable, LongWritable, LongWritable>(
           peer.getPeerIndex(), subgraphID);
       
@@ -357,7 +357,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
         
         // Dont add remote vertices to the VertexSubgraphMap as remote vertex subgraphID is unknown
         if (!vertex.isRemote()) {
-          vertexSubgraphMap.put(vertex.getVertexID(), subgraph.getSubgraphID());
+          vertexSubgraphMap.put(vertex.getVertexId(), subgraph.getSubgraphId());
         }        
       }
       

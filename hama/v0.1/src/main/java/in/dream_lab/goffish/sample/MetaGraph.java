@@ -31,11 +31,11 @@ public class MetaGraph extends
   @Override
   public void compute(
       Collection<IMessage<LongWritable, LongWritable>> messages) {
-    if (getSuperStep() == 0) {
-      long sid = getSubgraph().getSubgraphID().get();
+    if (getSuperstep() == 0) {
+      long sid = getSubgraph().getSubgraphId().get();
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getRemoteVertices()) {
-        System.out.println(sid + " " + vertex.getSubgraphID());
+        System.out.println(sid + " " + vertex.getSubgraphId());
       }
       voteToHalt();
     }

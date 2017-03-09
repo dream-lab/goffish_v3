@@ -36,8 +36,8 @@ public class VertexCount extends
   @Override
   public void compute(
       Collection<IMessage<LongWritable, LongWritable>> messages) {
-    if (getSuperStep() == 0) {
-      long count = getSubgraph().localVertexCount();
+    if (getSuperstep() == 0) {
+      long count = getSubgraph().getLocalVertexCount();
       LongWritable message = new LongWritable(count);
       sendToAll(message);
 

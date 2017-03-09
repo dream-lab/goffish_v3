@@ -64,9 +64,9 @@ public class GraphStats extends
      * neighbour subgraph ids
      */
     
-    if (getSuperStep() == 0) {
-      long vertexCount = getSubgraph().localVertexCount();
-      long edgeCount = Iterables.size(getSubgraph().getEdges());
+    if (getSuperstep() == 0) {
+      long vertexCount = getSubgraph().getLocalVertexCount();
+      long edgeCount = Iterables.size(getSubgraph().getOutEdges());
       String msgString = vertexCount + ";" + edgeCount;
       Text message = new Text(msgString);
       sendToAll(message);
@@ -74,14 +74,14 @@ public class GraphStats extends
       //For Meta graph adjacency list
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> remote : getSubgraph()
           .getRemoteVertices()) {
-        _neighbours.add(remote.getSubgraphID().get());
+        _neighbours.add(remote.getSubgraphId().get());
       }
       
       //For finding boundary Vertices
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> v :getSubgraph().getLocalVertices()) {
-Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.outEdges()) {
-          if (getSubgraph().getVertexByID(e.getSinkVertexID()).isRemote()) {
-            _boundaryVertices.add(v.getVertexID().get());
+Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()) {
+          if (getSubgraph().getVertexById(e.getSinkVertexId()).isRemote()) {
+            _boundaryVertices.add(v.getVertexId().get());
             break Inner;
           }
         }
@@ -90,7 +90,7 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.outEdges()) {
       return;
     }
     
-    if (getSuperStep() == 1) {
+    if (getSuperstep() == 1) {
       for (IMessage<LongWritable, Text> message : messages) {
         //number of messages received = number of subgraphs
         _subgraphCount++;
@@ -105,14 +105,14 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.outEdges()) {
     
     //Find Diameter of meta graph from this superstep
     
-    if(getSuperStep() == 2) {
+    if(getSuperstep() == 2) {
       //create a probe message(messageType;subgraphid;distance to next node)
       //P = Probe Message
       //R = Reply Message
-      String msg = "P;"+getSubgraph().getSubgraphID().get() + ";"+2;
-      _probed.add(getSubgraph().getSubgraphID().get());
+      String msg = "P;"+getSubgraph().getSubgraphId().get() + ";"+2;
+      _probed.add(getSubgraph().getSubgraphId().get());
       //distance to itself is 1
-      _distanceMap.put(getSubgraph().getSubgraphID().get(), new Long(1));
+      _distanceMap.put(getSubgraph().getSubgraphId().get(), new Long(1));
       Text probeMessage = new Text (msg);
       sendToNeighbors(probeMessage);
       sendToAll(new Text("HasUpdates"));
@@ -168,7 +168,7 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.outEdges()) {
         String forwardProbeMsg = "P;"+subgraphID+";"+(distance+1);
         sendToNeighbors(new Text(forwardProbeMsg));
         //reply with the distance to the probe initiator
-        String replyMsg = "R;"+getSubgraph().getSubgraphID().get()+";"+distance;
+        String replyMsg = "R;"+getSubgraph().getSubgraphId().get()+";"+distance;
         sendMessage(new LongWritable(subgraphID), new Text(replyMsg));
       }
       //if this the Reply message add it to the map
@@ -208,14 +208,14 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.outEdges()) {
     System.out.println("Subgraph Count = " + _subgraphCount);
     System.out.println("Meta Graph Diameter = " + _metaGraphDiameter);
     ISubgraph<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> subgraph = getSubgraph();
-    System.out.println("Subgraph " + subgraph.getSubgraphID()+" has " + _boundaryVertices.size() + " boundary vertices");
-    System.out.println("Subgraph " + subgraph.getSubgraphID()+" has " + subgraph.localVertexCount() +" local vertices");
-    System.out.println("Subgraph " + subgraph.getSubgraphID()+" has " + (subgraph.vertexCount() - subgraph.localVertexCount()) +" remote vertices");
-    System.out.println("Subgraph " + subgraph.getSubgraphID() + " has " + Iterables.size(subgraph.getEdges()) + " edges");
+    System.out.println("Subgraph " + subgraph.getSubgraphId()+" has " + _boundaryVertices.size() + " boundary vertices");
+    System.out.println("Subgraph " + subgraph.getSubgraphId()+" has " + subgraph.getLocalVertexCount() +" local vertices");
+    System.out.println("Subgraph " + subgraph.getSubgraphId()+" has " + (subgraph.getVertexCount() - subgraph.getLocalVertexCount()) +" remote vertices");
+    System.out.println("Subgraph " + subgraph.getSubgraphId() + " has " + Iterables.size(subgraph.getOutEdges()) + " edges");
     if (_neighbours.size() > 0) {
-      System.out.print("Subgraph " + subgraph.getSubgraphID() + " has neighbours ");
+      System.out.print("Subgraph " + subgraph.getSubgraphId() + " has neighbours ");
     } else {
-      System.out.println("Subgraph " + subgraph.getSubgraphID() + " has no neighbours ");
+      System.out.println("Subgraph " + subgraph.getSubgraphId() + " has no neighbours ");
     }
     for (Long neighbour : _neighbours) {
       System.out.print(neighbour + " ");

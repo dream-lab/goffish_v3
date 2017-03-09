@@ -54,14 +54,14 @@ public class RicherSubgraph<S extends Writable, V extends Writable, E extends Wr
     }
     else {
       _localVertices.add(v);
-      for (IEdge<E, I, J> edge : v.outEdges()) {
-        _edges.put(edge.getEdgeID(), edge);
+      for (IEdge<E, I, J> edge : v.getOutEdges()) {
+        _edges.put(edge.getEdgeId(), edge);
       }
     }
   }
   
   @Override
-  public long localVertexCount() {
+  public long getLocalVertexCount() {
     return _localVertices.size();
   }
   
@@ -76,14 +76,14 @@ public class RicherSubgraph<S extends Writable, V extends Writable, E extends Wr
   }
   
   @Override
-  public IEdge<E, I, J> getEdgeByID(J edgeID) {
+  public IEdge<E, I, J> getEdgeById(J edgeID) {
     return _edges.get(edgeID);
   }
   
   /*
    * Returns an iterable over all the edges of the subgraph
    */
-  public Iterable<IEdge<E, I, J>> getEdges() {
+  public Iterable<IEdge<E, I, J>> getOutEdges() {
     return _edges.values();
   }
 
