@@ -25,25 +25,26 @@ import org.apache.hadoop.io.Writable;
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IRemoteVertex;
 
-public class RemoteVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable> implements IRemoteVertex <V, E, I, J, K>{
+public class RemoteVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable>
+    implements IRemoteVertex<V, E, I, J, K> {
 
   I vertexID;
   K subgraphID;
   V _value;
-  
+
   public RemoteVertex(I vertexID, K subgraphID) {
     this.vertexID = vertexID;
     this.subgraphID = subgraphID;
   }
-  
+
   public RemoteVertex(I vertexID) {
     this.vertexID = vertexID;
   }
-  
+
   public void setSubgraphID(K subgraphID) {
     this.subgraphID = subgraphID;
   }
-  
+
   @Override
   public boolean isRemote() {
     return true;

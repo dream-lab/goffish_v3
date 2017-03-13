@@ -19,6 +19,7 @@ package in.dream_lab.goffish;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.hadoop.io.Writable;
@@ -26,30 +27,41 @@ import org.apache.hadoop.io.Writable;
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IVertex;
 
-public class Vertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable> implements IVertex<V, E, I, J> {
+public class Vertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable>
+    implements IVertex<V, E, I, J> {
+  
   private List<IEdge<E, I, J>> _adjList;
   private I vertexID;
   private V _value;
-  
-  Vertex(I ID) {
-    vertexID = ID;
-    _adjList = new ArrayList<IEdge<E, I, J>>();
+
+  // Change to ArrayList for larger graphs (more memory efficient)
+  Vertex() {
+    _adjList = new LinkedList<IEdge<E, I, J>>();
   }
-  
+
+  Vertex(I ID) {
+    this();
+    vertexID = ID;
+  }
+
   void addEdge(IEdge<E, I, J> edge) {
     _adjList.add(edge);
   }
-  
+
+  void setVertexID(I vertexID) {
+    this.vertexID = vertexID;
+  }
+
   @Override
   public I getVertexId() {
     return vertexID;
   }
-  
+
   @Override
   public boolean isRemote() {
     return false;
   }
-  
+
   @Override
   public Collection<IEdge<E, I, J>> getOutEdges() {
     return _adjList;
@@ -63,5 +75,11 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   @Override
   public void setValue(V value) {
     _value = value;
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public boolean equals(Object o) {
+    return this.vertexID == ((IVertex) o).getVertexId();
   }
 }

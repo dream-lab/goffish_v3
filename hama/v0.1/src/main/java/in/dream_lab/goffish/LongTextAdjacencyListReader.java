@@ -30,9 +30,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hama.bsp.BSPPeerImpl;
 
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
@@ -75,8 +73,8 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
   private Map<LongWritable, LongWritable> vertexSubgraphMap;
 
   public LongTextAdjacencyListReader(
-      BSPPeerImpl<Writable, Writable, Writable, Writable, Message<K, M>> peer,
-      HashMap<K, Integer> subgraphPartitionMap) {
+      BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer,
+      Map<K, Integer> subgraphPartitionMap) {
     this.peer = peer;
     this.subgraphPartitionMap = subgraphPartitionMap;
     this.vertexSubgraphMap = new HashMap<LongWritable, LongWritable>();
@@ -88,7 +86,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
   @Override
   public List<ISubgraph<S, V, E, LongWritable, LongWritable, LongWritable>> getSubgraphs()
       throws IOException, SyncException, InterruptedException {
-    
+
     KeyValuePair<Writable, Writable> pair;
     long edgeCount = 0;
 
@@ -98,36 +96,38 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
     while ((pair = peer.readNext()) != null) {
       String stringInput = pair.getValue().toString();
       String vertexValue[] = stringInput.split("\\s+");
-      
+
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-      Vertex<V, E, LongWritable, LongWritable> vertex = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+      Vertex<V, E, LongWritable, LongWritable> vertex = new Vertex<V, E, LongWritable, LongWritable>(
+          vertexID);
 
       for (int j = 1; j < vertexValue.length; j++) {
         LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
         LongWritable edgeID = new LongWritable(
-                edgeCount++ | (((long) peer.getPeerIndex()) << 32));
-        Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(edgeID, sinkID);
+            edgeCount++ | (((long) peer.getPeerIndex()) << 32));
+        Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
+            edgeID, sinkID);
         vertex.addEdge(e);
       }
 
-      vertexMap.put(vertex.getVertexId().get(), vertex);
+      vertexMap.put(vertexID.get(), vertex);
 
     }
 
     /* Create remote vertex objects. */
-    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap.values()) {
+    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap
+        .values()) {
       for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges()) {
         LongWritable sinkID = e.getSinkVertexId();
-        IVertex<V, E, LongWritable, LongWritable> sink = vertexMap.get(sinkID.get());
-        if (sink == null) {
-          sink = new RemoteVertex<V, E, LongWritable, LongWritable, LongWritable>(
+        if (!vertexMap.containsKey(sinkID.get())) {
+          IRemoteVertex<V, E, LongWritable, LongWritable, LongWritable> sink = new RemoteVertex<>(
               sinkID);
-          remoteVertexMap.put(sinkID.get(), (IRemoteVertex<V, E, LongWritable, LongWritable, LongWritable>)sink);
+          remoteVertexMap.put(sinkID.get(), sink);
         }
       }
     }
-    
-    Partition<S, V, E, LongWritable, LongWritable, LongWritable> partition = new Partition<S, V, E, LongWritable, LongWritable, LongWritable>(
+
+    Partition<S, V, E, LongWritable, LongWritable, LongWritable> partition = new Partition<>(
         peer.getPeerIndex());
 
     formSubgraphs(partition);
@@ -145,7 +145,8 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
      */
     byte partitionIDbytes[] = Ints.toByteArray(peer.getPeerIndex());
     controlInfo.addextraInfo(partitionIDbytes);
-    for (IVertex<V, E, LongWritable, LongWritable> v : remoteVertexMap.values()) {
+    for (IVertex<V, E, LongWritable, LongWritable> v : remoteVertexMap
+        .values()) {
       byte vertexIDbytes[] = Longs.toByteArray(v.getVertexId().get());
       controlInfo.addextraInfo(vertexIDbytes);
     }
@@ -234,6 +235,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
             Longs.fromByteArray(queryResponse.next().getBytes()));
         RemoteVertex<V, E, LongWritable, LongWritable, LongWritable> sink = (RemoteVertex<V, E, LongWritable, LongWritable, LongWritable>) remoteVertexMap
             .get(sinkID.get());
+        assert (sink != null);
         sink.setSubgraphID(remoteSubgraphID);
       }
     }
@@ -263,19 +265,21 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
     byte partitionBytes[] = Ints.toByteArray(peer.getPeerIndex());
     controlInfo.addextraInfo(partitionBytes);
 
-    
     // initialize disjoint set
     DisjointSets<IVertex<V, E, LongWritable, LongWritable>> ds = new DisjointSets<IVertex<V, E, LongWritable, LongWritable>>(
         vertexMap.size() + remoteVertexMap.size());
-    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap.values()) {
+    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap
+        .values()) {
       ds.addSet(vertex);
     }
-    for (IVertex<V, E, LongWritable, LongWritable> vertex : remoteVertexMap.values()) {
+    for (IVertex<V, E, LongWritable, LongWritable> vertex : remoteVertexMap
+        .values()) {
       ds.addSet(vertex);
     }
 
     // union edge pairs
-    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap.values()) {
+    for (IVertex<V, E, LongWritable, LongWritable> vertex : vertexMap
+        .values()) {
       for (IEdge<E, LongWritable, LongWritable> edge : vertex.getOutEdges()) {
         IVertex<V, E, LongWritable, LongWritable> sink = vertexMap
             .get(edge.getSinkVertexId().get());

@@ -33,13 +33,13 @@ public interface IVertex<V extends Writable, E extends Writable, I extends Writa
   I getVertexId();
 
   boolean isRemote();
-  
+
   Collection<IEdge<E, I, J>> getOutEdges();
-  
-  //K getSubgraphID(); Seperate interface
+
+  // K getSubgraphID(); Seperate interface
   // TODO: Add bivertex.
-  
+
   V getValue();
-  
+
   void setValue(V value);
 }

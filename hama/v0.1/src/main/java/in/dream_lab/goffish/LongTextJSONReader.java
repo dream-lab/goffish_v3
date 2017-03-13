@@ -70,8 +70,8 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
   private Map<LongWritable, LongWritable> vertexSubgraphMap;
 
   public LongTextJSONReader(
-      BSPPeerImpl<Writable, Writable, Writable, Writable, Message<K, M>> peer,
-      HashMap<K, Integer> subgraphPartitionMap) {
+      BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer,
+      Map<K, Integer> subgraphPartitionMap) {
     this.peer = peer;
     this.subgraphPartitionMap = subgraphPartitionMap;
     this.conf = peer.getConfiguration();

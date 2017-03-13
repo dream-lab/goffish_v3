@@ -27,31 +27,32 @@ import org.apache.hadoop.io.Writable;
 import in.dream_lab.goffish.api.IPartition;
 import in.dream_lab.goffish.api.ISubgraph;
 
-public class Partition<S extends Writable, V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable> implements IPartition<S, V, E, I, J, K> {
+public class Partition<S extends Writable, V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable>
+    implements IPartition<S, V, E, I, J, K> {
+
   private int partitionID;
   private List<ISubgraph<S, V, E, I, J, K>> _subgraphs;
   private Map<K, ISubgraph<S, V, E, I, J, K>> _subgraphMap;
-  
+
   Partition(int ID) {
     partitionID = ID;
     _subgraphs = new ArrayList<ISubgraph<S, V, E, I, J, K>>();
     _subgraphMap = new HashMap<K, ISubgraph<S, V, E, I, J, K>>();
   }
-  
+
   @Override
   public int getPartitionId() {
     return partitionID;
   }
-  
+
   public void addSubgraph(ISubgraph<S, V, E, I, J, K> subgraph) {
     _subgraphs.add(subgraph);
     _subgraphMap.put(subgraph.getSubgraphId(), subgraph);
   }
-  
+
   public List<ISubgraph<S, V, E, I, J, K>> getSubgraphs() {
     return _subgraphs;
   }
-  
 
   @Override
   public void removeSubgraph(K subgraphID) {

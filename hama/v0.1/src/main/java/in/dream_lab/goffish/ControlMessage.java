@@ -37,18 +37,18 @@ import com.google.common.primitives.Longs;
 
 import in.dream_lab.goffish.humus.api.IControlMessage;
 
-class ControlMessage implements IControlMessage{
+class ControlMessage implements IControlMessage {
 
   private IControlMessage.TransmissionType transmissionType;
   private Text vertexValues = new Text("");
   private List<BytesWritable> extraInfo;
-  private int partitionID;
-  
+  private int sourcePartitionID;
+
   public ControlMessage() {
     transmissionType = IControlMessage.TransmissionType.NORMAL;
     extraInfo = Lists.newArrayList();
   }
-  
+
   @Override
   public void write(DataOutput out) throws IOException {
     WritableUtils.writeEnum(out, transmissionType);
@@ -56,11 +56,10 @@ class ControlMessage implements IControlMessage{
     for (BytesWritable info : extraInfo) {
       info.write(out);
     }
-    
+
     if (isPartitionMessage()) {
-      out.writeInt(partitionID);
-    }
-    else if(isVertexMessage()) {
+      out.writeInt(sourcePartitionID);
+    } else if (isVertexMessage()) {
       vertexValues.write(out);
     }
   }
@@ -71,15 +70,14 @@ class ControlMessage implements IControlMessage{
     extraInfo = Lists.newArrayList();
     int extraInfoSize;
     extraInfoSize = in.readInt();
-    while(extraInfoSize-- > 0) {
+    while (extraInfoSize-- > 0) {
       BytesWritable info = new BytesWritable();
       info.readFields(in);
       extraInfo.add(info);
     }
     if (isPartitionMessage()) {
-      partitionID = in.readInt();
-    }
-    else if (isVertexMessage()) {
+      sourcePartitionID = in.readInt();
+    } else if (isVertexMessage()) {
       vertexValues.readFields(in);
     }
   }
@@ -88,44 +86,46 @@ class ControlMessage implements IControlMessage{
   public TransmissionType getTransmissionType() {
     return transmissionType;
   }
-  
-  public void setTransmissionType(IControlMessage.TransmissionType transmissionType) {
+
+  public void setTransmissionType(
+      IControlMessage.TransmissionType transmissionType) {
     this.transmissionType = transmissionType;
   }
-  
+
   public void setPartitionID(int partitionID) {
     this.setPartitionID(partitionID);
   }
-  
-  //remove this and just use extrainfo
+
+  // remove this and just use extrainfo
   public void setVertexValues(String vertex) {
     this.vertexValues = new Text(vertex);
   }
-  
+
   public String getVertexValues() {
     return vertexValues.toString();
   }
-  
+
   public void addextraInfo(byte b[]) {
     BytesWritable info = new BytesWritable(b);
     this.extraInfo.add(info);
   }
-  
-  public  Iterable<BytesWritable> getExtraInfo() {
+
+  public Iterable<BytesWritable> getExtraInfo() {
     return extraInfo;
   }
-  
+
   public boolean isNormalMessage() {
     return transmissionType == IControlMessage.TransmissionType.NORMAL;
   }
+
   public boolean isPartitionMessage() {
     return transmissionType == IControlMessage.TransmissionType.PARTITION;
   }
-  
+
   public boolean isVertexMessage() {
     return transmissionType == IControlMessage.TransmissionType.VERTEX;
   }
-  
+
   public boolean isBroadcastMessage() {
     return transmissionType == IControlMessage.TransmissionType.BROADCAST;
   }
@@ -134,7 +134,7 @@ class ControlMessage implements IControlMessage{
   @Override
   public String toString() {
     if(isPartitionMessage()) {
-      return String.valueOf(partitionID);
+      return String.valueOf(sourcePartitionID);
     }
     else if (isVertexMessage()) {
       return vertexValues.toString();

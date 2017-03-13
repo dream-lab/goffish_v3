@@ -21,26 +21,31 @@ import org.apache.hadoop.io.Writable;
 
 import in.dream_lab.goffish.api.IEdge;
 
-public class Edge<E extends Writable, I extends Writable, J extends Writable> implements IEdge<E, I, J> {
+public class Edge<E extends Writable, I extends Writable, J extends Writable>
+    implements IEdge<E, I, J> {
   private E _value;
   private J edgeID;
   private I _sink;
-  
+
   Edge(J id, I sinkID) {
     edgeID = id;
     _sink = sinkID;
   }
-  
+
+  void setSinkID(I sinkID) {
+    _sink = sinkID;
+  }
+
   @Override
   public E getValue() {
     return _value;
   }
-  
+
   @Override
   public void setValue(E val) {
     _value = val;
   }
-  
+
   @Override
   public J getEdgeId() {
     return edgeID;
