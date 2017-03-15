@@ -37,7 +37,7 @@ public class EdgeList extends
   @Override
   public void compute(
       Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {
         for (IEdge<LongWritable, LongWritable, LongWritable> e : vertex

@@ -64,7 +64,7 @@ public class GraphStats extends
      * neighbour subgraph ids
      */
     
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       long vertexCount = getSubgraph().getLocalVertexCount();
       long edgeCount = Iterables.size(getSubgraph().getOutEdges());
       String msgString = vertexCount + ";" + edgeCount;
@@ -90,7 +90,7 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()
       return;
     }
     
-    if (getSuperStep() == 1) {
+    if (getSuperstep() == 1) {
       for (IMessage<LongWritable, Text> message : messages) {
         //number of messages received = number of subgraphs
         _subgraphCount++;
@@ -105,7 +105,7 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()
     
     //Find Diameter of meta graph from this superstep
     
-    if(getSuperStep() == 2) {
+    if(getSuperstep() == 2) {
       //create a probe message(messageType;subgraphid;distance to next node)
       //P = Probe Message
       //R = Reply Message

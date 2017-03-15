@@ -51,7 +51,7 @@ public class PageRank extends
 
   @Override
   public void compute(Iterable<IMessage<LongWritable, Text>> messages) throws IOException {
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       _weights = new HashMap<>((int) getSubgraph().getVertexCount(), 1f);
       sums = new HashMap<>((int) getSubgraph().getVertexCount(), 1f);
 
@@ -115,7 +115,7 @@ public class PageRank extends
       }
     }
 
-    if (getSuperStep() < 30) {
+    if (getSuperstep() < 30) {
 
       // message aggregation
       HashMap<Long, StringBuilder> messageAggregator = new HashMap<>(

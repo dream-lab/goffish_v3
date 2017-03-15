@@ -31,7 +31,7 @@ public class MetaGraph extends
   @Override
   public void compute(
       Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       long sid = getSubgraph().getSubgraphId().get();
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getRemoteVertices()) {

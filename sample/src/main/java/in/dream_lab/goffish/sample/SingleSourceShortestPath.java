@@ -36,6 +36,8 @@ import java.util.Set;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
+import com.google.common.collect.Iterables;
+
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IMessage;
 import in.dream_lab.goffish.api.IRemoteVertex;
@@ -142,7 +144,7 @@ public class SingleSourceShortestPath extends
     try {
       // init IDs for logging
       // FIXME: Charith, we need an init() method later on
-      if (getSuperStep() == 0) {
+      if (getSuperstep() == 0) {
         //partitionId = partition.getId();
         subgraphId = getSubgraph().getSubgraphId().get();
         //logFileName = "SP_" + partitionId + "_" + subgraphId + ".log";
@@ -156,16 +158,16 @@ public class SingleSourceShortestPath extends
       ///////////////////////////////////////////////////////////
       // First superstep. Get source superstep as input.
       // Initialize distances. calculate shortest distances in subgraph.
-      if (getSuperStep() == 0) {
+      if (getSuperstep() == 0) {
 
         // get input variables from init message
-//        if (packedSubGraphMessages.size() == 0) {
-//          throw new RuntimeException(
-//              "Initial subgraph message was missing! Require sourceVertexID to be passed");
-//        }
+        if (Iterables.size(packedSubGraphMessages) == 0) {
+          throw new RuntimeException(
+              "Initial subgraph message was missing! Require sourceVertexID to be passed");
+        }
 
-//        sourceVertexID = Long
-//            .parseLong(packedSubGraphMessages.iterator().next().getMessage().toString());
+        sourceVertexID = Long
+            .parseLong(packedSubGraphMessages.iterator().next().getMessage().toString());
 
         log("Initializing source vertex = " + sourceVertexID);
 
@@ -325,33 +327,7 @@ public class SingleSourceShortestPath extends
   public void wrapup() {
 
     ///////////////////////////////////////////////
-    /// Log the distance map
-/*    try {
-      Path filepath = logRootDir
-          .resolve("from-" + sourceVertexID + "-pt-" + partition.getId()
-              + "-sg-" + getSubgraph().getSubgraphID().get() + "-" + getSuperStep() + ".sssp");
-      System.out.println("Writing mappings to file " + filepath);
-      File file = new File(filepath.toString());
-      PrintWriter writer = new PrintWriter(file);
-      writer.println("# Source vertex," + sourceVertexID);
-      writer.println("## Sink vertex, Distance, Sink Parent");
-      for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> v : getSubgraph()
-          .getVertices()) {
-        if (!v.isRemote()) { // print only non-remote vertices
-          DistanceParentPair distanceParentPair = shortestDistanceMap
-              .get(v.getVertexID().get());
-          if (distanceParentPair.distance != Short.MAX_VALUE) // print only
-                                                              // connected
-                                                              // vertices
-            writer.println(v.getVertexID().get() + "," + distanceParentPair.distance + ","
-                + distanceParentPair.parent);
-        }
-      }
-      writer.flush();
-      writer.close();
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }*/
+    /// Print the distance map
     System.out.println("# Source vertex," + sourceVertexID);
     System.out.println("## Sink vertex, Distance, Sink Parent");
     for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> v : getSubgraph()

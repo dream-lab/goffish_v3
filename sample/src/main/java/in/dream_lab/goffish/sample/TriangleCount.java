@@ -71,7 +71,7 @@ public class TriangleCount extends
   public void compute(Iterable<IMessage<LongWritable, Text>> messageList) throws IOException {
 
     // Convert adjacency list to adjacency set
-    if (getSuperStep() == 0) {
+    if (getSuperstep() == 0) {
       // trianglesList = new StringBuilder();
       adjSet = new HashMap<Long, Set<Long>>();
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
@@ -84,7 +84,7 @@ public class TriangleCount extends
         adjSet.put(vertex.getVertexId().get(), adjVertices);
       }
       return;
-    } else if (getSuperStep() == 1) {
+    } else if (getSuperstep() == 1) {
       Map<Long, StringBuilder> msg = new HashMap<Long, StringBuilder>();
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {
@@ -134,7 +134,7 @@ public class TriangleCount extends
         }
       }
       sendPackedMessages(msg);
-    } else if (getSuperStep() == 2) {
+    } else if (getSuperstep() == 2) {
       Map<Long, List<Pair<Long, Long>>> ids = new HashMap<Long, List<Pair<Long, Long>>>();
       unpackMessages(messageList, ids);
 
