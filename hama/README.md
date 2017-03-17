@@ -1,4 +1,4 @@
-#GoFFish on Hama
+# GoFFish on Hama
 
 Follow the steps to install GoFFish
 
@@ -71,19 +71,19 @@ Follow the steps to install GoFFish
    General format of running goffish-hama job:
 
     ```
-   hama jar goffish-hama-3.1-jar-with-dependencies.jar in.dream_lab.goffish.sample.XXXJob properties-file input-path output-path 
+   hama JobClass properties-file input-path output-path 
     ```
 
     where input-path and output-path is the path of the graph in HDFS and path of the  output in HDFS, 	respectively and properties-file is local file used for loading properties of job; e.g:
 
     ```
-   hama jar goffish-hama-3.1-jar-with-dependencies.jar in.dream_lab.goffish.sample.DefaultJob ConnectedComponents.properties facebook_graph fbout
+   hama in.dream_lab.goffish.sample.DefaultJob ConnectedComponents.properties facebook_graph fbout
     ```
    Output and logs can be found at $HAMA_HOME/logs/tasklogs/job_id/
 
 5. **Writing custom application**
 
-   Your application has to extend AbstractSubgraphComputation.java and implement the compute function. The job configuration (equivalent of driver class in MapReduce)  can be written in the form of properties file or as a Java class. See DefaultJob.java and ConnectedComponents.properties for more details.
+   Your application has to extend [AbstractSubgraphComputation.java](https://github.com/dream-lab/goffish_v3/blob/master/api/src/main/java/in/dream_lab/goffish/api/AbstractSubgraphComputation.java) and implement the compute function. The job configuration (equivalent of driver class in MapReduce)  can be written in the form of properties file or as a Java class. See [DefaultJob.java](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/DefaultJob.java) and [ConnectedComponents.properties](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/ConnectedComponents.properties) for more details.
 
    Add the following dependencies to your project in pom.xml:
 
@@ -100,4 +100,10 @@ Follow the steps to install GoFFish
    </dependency>
    ```
 
-   Your application can be run in the similar way as described above for the sample job.
+   Your application can be run in the similar way as described above for the sample job, you just have to put the jar file in Hama classpath:
+
+   ```
+   export HAMA_CLASSPATH=/home/user/my_application.jar
+   ```
+
+   ​
