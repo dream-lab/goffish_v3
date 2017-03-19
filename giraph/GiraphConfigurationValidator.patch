@@ -1,0 +1,25 @@
+@@ -137,15 +137,15 @@
+    */
+   public void validateConfiguration() {
+     checkConfiguration();
+-    verifyOutEdgesGenericTypes();
+-    verifyVertexInputFormatGenericTypes();
+-    verifyEdgeInputFormatGenericTypes();
+-    verifyVertexOutputFormatGenericTypes();
+-    verifyEdgeOutputFormatGenericTypes();
+-    verifyVertexResolverGenericTypes();
+-    verifyVertexValueCombinerGenericTypes();
+-    verifyMessageCombinerGenericTypes();
+-    verifyVertexValueFactoryGenericTypes();
++//    verifyOutEdgesGenericTypes();
++//    verifyVertexInputFormatGenericTypes();
++//    verifyEdgeInputFormatGenericTypes();
++//    verifyVertexOutputFormatGenericTypes();
++//    verifyEdgeOutputFormatGenericTypes();
++//    verifyVertexResolverGenericTypes();
++//    verifyVertexValueCombinerGenericTypes();
++//    verifyMessageCombinerGenericTypes();
++//    verifyVertexValueFactoryGenericTypes();
+   }
+ 
+   /**
