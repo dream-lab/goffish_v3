@@ -54,7 +54,7 @@ public abstract class AbstractSubgraphComputation<S extends Writable, V extends 
 
 
   public void sendMessage(K subgraphID, Iterable<M> message) {
-    subgraphPlatformCompute.sendMessage(subgraphID, message);
+    subgraphPlatformCompute.sendMessageToSubgraph(subgraphID, message);
   }
 
 
