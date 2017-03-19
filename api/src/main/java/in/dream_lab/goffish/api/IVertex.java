@@ -17,8 +17,6 @@
  */
 package in.dream_lab.goffish.api;
 
-import java.util.Collection;
-
 import org.apache.hadoop.io.Writable;
 
 /* Defines Vertex interface. Could be used to define multiple graph representation,
