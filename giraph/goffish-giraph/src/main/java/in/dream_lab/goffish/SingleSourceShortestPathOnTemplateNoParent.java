@@ -16,7 +16,6 @@
 package in.dream_lab.goffish;
 
 import in.dream_lab.goffish.api.*;
-import org.apache.giraph.examples.ShortestPathSubgraphValue;
 import org.apache.giraph.utils.ExtendedByteArrayDataInput;
 import org.apache.giraph.utils.ExtendedByteArrayDataOutput;
 import org.apache.hadoop.io.BytesWritable;

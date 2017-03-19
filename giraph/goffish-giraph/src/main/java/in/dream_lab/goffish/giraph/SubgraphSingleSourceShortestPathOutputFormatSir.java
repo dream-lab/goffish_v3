@@ -2,7 +2,7 @@ package in.dream_lab.goffish.giraph;
 
 import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.api.IVertex;
-import org.apache.giraph.examples.ShortestPathSubgraphValue;
+import in.dream_lab.goffish.ShortestPathSubgraphValue;
 import org.apache.giraph.graph.*;
 import org.apache.giraph.io.formats.TextVertexOutputFormat;
 import org.apache.hadoop.io.LongWritable;
