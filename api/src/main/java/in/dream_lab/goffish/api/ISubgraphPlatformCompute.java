@@ -39,9 +39,7 @@ public interface ISubgraphCompute<S extends Writable, V extends Writable, E exte
 
   long getSuperstep();
 
-  void compute(Iterable<IMessage<K, M>> messages) throws IOException;
-
-  void sendMessage(K subgraphID, M message);
+  void sendMessageToSubgraph(K subgraphID, M message);
 
   void sendToVertex(I vertexID, M message);
 
@@ -54,5 +52,7 @@ public interface ISubgraphCompute<S extends Writable, V extends Writable, E exte
   void sendToAll(Iterable<M> message);
 
   void sendToNeighbors(Iterable<M> message);
+  
+  String getConf(String key);
 
 }
