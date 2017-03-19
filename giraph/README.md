@@ -5,6 +5,9 @@ hadoop jar goffish-giraph-1.2.0-RC0-for-hadoop-2.6.0-jar-with-dependencies.jar o
 
 ### Giraph codebase changes
 
-**GiraphConfigurationValidatory.java** Comment calls to verify* functions in **validateConfiguration()**
+Apply `GiraphConfigurationValidator.patch` to the class `org.apache.giraph.job.GiraphConfigurationValidator`.
 
+```
+patch giraph/giraph-core/src/main/java/org/apache/giraph/job/GiraphConfigurationValidator.java GiraphConfigurationValidator.patch
+```
 
