@@ -70,4 +70,8 @@ public abstract class AbstractSubgraphComputation<S extends Writable, V extends 
     subgraphPlatformCompute.sendToNeighbors(message);
   }
 
+  public String getConf(String key) {
+    return subgraphPlatformCompute.getConf(key);
+  }
+
 }
