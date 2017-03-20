@@ -21,7 +21,7 @@ Now that we have cloned the Giraph repository, let's switch to the commit having
 
 Modifying pom.xml
 ~~~~~~~~~~~~~~~~~
-We would be building Giraph for Hadoop v2.7.2 with YARN support. Trying to compile the source code right away would result  in a compilation error stating that `SASL_PROPS` symbol could not be found. To get around this we would need to remove the `STATIC_SASL_SYMBOL` munge symbol under hadoop_yarn profile in `pom.xml`. Open your favourite text editor and edit the line `<munge.symbols>PURE_YARN,STATIC_SASL_SYMBOL</munge.symbols>` to the following
+We would be building Giraph for Hadoop v2.7.2 with YARN support. Trying to compile the source code right away would result  in a compilation error stating that ``SASL_PROPS`` symbol could not be found. To get around this we would need to remove the ``STATIC_SASL_SYMBOL`` munge symbol under hadoop_yarn profile in ``pom.xml``. Open your favourite text editor and edit the line ``<munge.symbols>PURE_YARN,STATIC_SASL_SYMBOL</munge.symbols>`` to the following
 
 .. code-block:: xml
 
