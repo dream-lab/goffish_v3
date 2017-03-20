@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.apache.giraph</groupId>
         <artifactId>giraph-parent</artifactId>
-        <version>1.2.0-RC0</version>
+        <version>1.2.0</version>
     </parent>
     <groupId>in.dream_lab.goffish.giraph</groupId>
     <artifactId>goffish-giraph</artifactId>
@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-examples</artifactId>
-            <version>1.2.0-RC0</version>
+            <version>1.2.0</version>
         </dependency>
         <dependency>
             <groupId>in.dream_lab.goffish</groupId>
