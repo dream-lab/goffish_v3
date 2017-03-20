@@ -47,15 +47,6 @@ Under the `hadoop_yarn` profile, add the version tags to the ``hadoop-common, ha
         <version>${hadoop.version}</version>
     </dependency>
 
-
-Building Giraph from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-We use Maven to build Giraph with the following command, specifying the profile ``hadoop_yarn`` and hadoop version ``2.7.2`` as command line parameters.
-
-.. code-block:: bash
-
-    mvn –Phadoop_yarn –Dhadoop.version=2.7.2 -DskipTests clean package
-
 Setting up GoFFish-Giraph
 -------------------------
 Fetch the GoFFish-Giraph's source from the git repository
@@ -87,3 +78,20 @@ Add the new modules to the root ``pom.xml``.
       <module>goffish-giraph</module>
       <module>goffish-api</module>
     </modules>
+    
+Building GoFFish-Giraph from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We use Maven to build GoFFish-Giraph with the following command, specifying the profile ``hadoop_yarn`` and hadoop version ``2.7.2`` as command line parameters.
+
+.. code-block:: bash
+
+    mvn –Phadoop_yarn –Dhadoop.version=2.7.2 -DskipTests clean package
+    
+Sample Command
+--------------
+  
+.. code-block:: bash
+  
+    hadoop jar goffish-giraph-1.2.0-RC0-for-hadoop-2.6.0-jar-with-dependencies.jar org.apache.giraph.GiraphRunner -Dgiraph.metrics.enable=true in.dream_lab.goffish.giraph.graph.GiraphSubgraphComputation -vif in.dream_lab.goffish.giraph.formats.LongDoubleDoubleAdjacencyListSubgraphInputFormat -vip anirudh-stuff/subgraph-input-small -vof in.dream_lab.goffish.giraph.formats.SubgraphSingleSourceShortestPathOutputFormatSir -op anirudh-stuff/output/blehfinal -ca giraph.subgraphVertexValueClass=org.apache.hadoop.io.DoubleWritable,subgraphSourceVertex=1,giraph.subgraphMessageValueClass=org.apache.hadoop.io.BytesWritable,giraph.outgoingMessageValueFactoryClass=in.dream_lab.goffish.giraph.factories.DefaultSubgraphMessageFactory,giraph.messageEncodeAndStoreType=POINTER_LIST_PER_VERTEX,giraph.clientSendBufferSize=20000000,giraph.clientReceiveBufferSize=20000000,giraph.graphPartitionerFactoryClass=in.dream_lab.goffish.giraph.factories.SubgraphPartitionerFactory,giraph.subgraphValueClass=org.apache.hadoop.io.LongWritable,giraph.vertexClass=in.dream_lab.goffish.giraph.graph.DefaultSubgraph,subgraphComputationClass=in.dream_lab.goffish.giraph.examples.SingleSourceShortestPath,giraph.edgeValueClass=org.apache.hadoop.io.DoubleWritable,giraph.vertexIdClass=in.dream_lab.goffish.giraph.graph.SubgraphId,giraph.vertexValueClass=in.dream_lab.goffish.giraph.graph.SubgraphVertices,giraph.outgoingMessageValueClass=in.dream_lab.goffish.giraph.graph.SubgraphMessage -yj goffish-giraph-1.2.0-RC0-for-hadoop-2.6.0-jar-with-dependencies.jar -mc in.dream_lab.goffish.giraph.master.SubgraphMasterCompute -w 4 -yh 4000
+    
+
