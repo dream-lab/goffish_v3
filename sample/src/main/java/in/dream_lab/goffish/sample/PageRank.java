@@ -21,6 +21,8 @@ import java.util.*;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 
+import com.google.common.collect.Iterables;
+
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IMessage;
 import in.dream_lab.goffish.api.IRemoteVertex;
@@ -77,7 +79,7 @@ public class PageRank extends
         }
 
         double delta = _weights.get(vertex.getVertexId().get())
-            / vertex.getOutEdges().size();
+            / Iterables.size(vertex.getOutEdges());
         for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex
             .getOutEdges()) {
           myD = sums.get(edge.getSinkVertexId().get()); // sinkVertexId

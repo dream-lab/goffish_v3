@@ -52,7 +52,7 @@ public interface ISubgraphCompute<S extends Writable, V extends Writable, E exte
   void sendToAll(Iterable<M> message);
 
   void sendToNeighbors(Iterable<M> message);
-  
+
   String getConf(String key);
 
 }

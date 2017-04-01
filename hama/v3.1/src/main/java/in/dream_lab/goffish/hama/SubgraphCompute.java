@@ -74,12 +74,12 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
   @Override
   public void sendMessage(K subgraphID, Iterable<M> messages) {
     for (M message : messages) {
-      this.sendMessage(subgraphID, message);
+      this.sendMessageToSubgraph(subgraphID, message);
     }
   }
 
   @Override
-  public void sendMessage(K subgraphID, M message) {
+  public void sendMessageToSubgraph(K subgraphID, M message) {
     runner.sendMessage(subgraphID, message);
   }
 
@@ -111,13 +111,20 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
   public void sendToNeighbors(M message) {
     runner.sendToNeighbors(subgraph, message);
   }
-  
-  public void setAbstractSubgraphCompute(AbstractSubgraphComputation<S, V, E, M, I, J, K> comp) {
+
+  public void setAbstractSubgraphCompute(
+      AbstractSubgraphComputation<S, V, E, M, I, J, K> comp) {
     this.abstractSubgraphCompute = comp;
   }
-  
-  @Override
+
   public void compute(Iterable<IMessage<K, M>> messages) throws IOException {
     abstractSubgraphCompute.compute(messages);
   }
+
+  @Override
+  public String getConf(String key) {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
 }
