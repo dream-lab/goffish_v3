@@ -77,7 +77,7 @@ Follow the steps to install GoFFish
     where input-path and output-path is the path of the graph in HDFS and path of the  output in HDFS, 	respectively and properties-file is local file used for loading properties of job; e.g:
 
     ```
-   hama in.dream_lab.goffish.sample.DefaultJob ConnectedComponents.properties facebook_graph fbout
+   hama in.dream_lab.goffish.job.DefaultJob ConnectedComponents.properties facebook_graph fbout
     ```
    Output and logs can be found at $HAMA_HOME/logs/tasklogs/job_id/
 
