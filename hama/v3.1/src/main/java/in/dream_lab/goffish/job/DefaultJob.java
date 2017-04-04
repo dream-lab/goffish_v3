@@ -31,6 +31,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.InputFormat;
+import org.apache.hama.bsp.TextInputFormat;
 import org.apache.hama.bsp.OutputFormat;
 import org.apache.hama.bsp.TextOutputFormat;
 
@@ -78,6 +79,11 @@ public class DefaultJob {
 
     String inputReaderClass = prop.getProperty("inputReaderClass");
     job.setInputReaderClass((Class<? extends IReader>)Class.forName(inputReaderClass));
+    
+    String initialInput = prop.getProperty("initialInput");
+    if (initialInput != null) {
+      job.setInitialInput(initialInput);
+    }
 
     // Blocks till job completed
     job.waitForCompletion(true);
