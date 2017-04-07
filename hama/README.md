@@ -8,7 +8,7 @@ Follow the steps to install GoFFish
 
     ```
     git clone https://github.com/dream-lab/goffish_v3
-    cd goffish/api
+    cd goffish_v3/api
     mvn clean install						# Build api project
     cd ../sample
     mvn clean install						# Build sample project
