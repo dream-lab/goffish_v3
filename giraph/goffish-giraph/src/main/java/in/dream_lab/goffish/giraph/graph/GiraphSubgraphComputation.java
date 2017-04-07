@@ -32,7 +32,7 @@ import java.util.Iterator;
 
 public class GiraphSubgraphComputation<S extends WritableComparable,
     I extends WritableComparable, V extends WritableComparable, E extends Writable, M extends Writable, SV extends Writable, EI extends WritableComparable> extends BasicComputation<SubgraphId<S>, SubgraphVertices<SV, V, E, I, EI, S>, E, SubgraphMessage<S,M>>
-    implements ISubgraphPlatformCompute<SV, V, E, M, I, EI, S> {
+    implements ISubgraphCompute<SV, V, E, M, I, EI, S> {
 
   private static final Logger LOG = Logger.getLogger(GiraphSubgraphComputation.class);
 
