@@ -132,6 +132,11 @@ public class GiraphSubgraphComputation<S extends WritableComparable,
   }
 
   @Override
+  public boolean hasVotedToHalt() {
+    return subgraph.isHalted();
+  }
+
+  @Override
   public void sendMessageToSubgraph(S subgraphId, M message) {
     SubgraphMessage sm = new SubgraphMessage(subgraphId, message);
     SubgraphId<S> sId = new SubgraphId<>(subgraphId, getPartition(subgraphId));
