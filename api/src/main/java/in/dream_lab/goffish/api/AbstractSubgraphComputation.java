@@ -41,6 +41,10 @@ public abstract class AbstractSubgraphComputation<S extends Writable, V extends 
   public void voteToHalt() {
     subgraphPlatformCompute.voteToHalt();
   }
+  
+  public boolean hasVotedToHalt() {
+    return subgraphPlatformCompute.hasVotedToHalt();  
+  }
 
   public abstract void compute(Iterable<IMessage<K, M>> messages) throws IOException;
 

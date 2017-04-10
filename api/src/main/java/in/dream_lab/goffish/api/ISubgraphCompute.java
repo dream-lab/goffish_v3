@@ -36,6 +36,8 @@ public interface ISubgraphCompute<S extends Writable, V extends Writable, E exte
                                             // ISubgraph<S, V, E, I, J, K>
 
   void voteToHalt();
+  
+  boolean hasVotedToHalt();
 
   long getSuperstep();
 

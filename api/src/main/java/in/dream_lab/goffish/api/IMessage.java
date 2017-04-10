@@ -21,16 +21,7 @@ import org.apache.hadoop.io.Writable;
 
 public interface IMessage<K extends Writable, M extends Writable>
     extends Writable {
-
-  enum MessageType {
-    VERTEX, 
-    SUBGRAPH, 
-    CUSTOM_MESSAGE, 
-    MESSAGE_LIST
-  }
-
-  MessageType getMessageType();
-
+  
   K getSubgraphId(); // Auto filled by framework
 
   M getMessage(); // User defined type
