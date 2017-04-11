@@ -65,7 +65,7 @@ Follow the steps to install GoFFish
 
    ```
    cd goffish_v3/
-   cp -t $HAMA_HOME/lib/ api/target/goffish-api-3.1.jar sample/target/goffish-sample-3.1.jar hama/v3.1/target/goffish-hama-3.1-jar-with-dependencies.jar
+   cp -t $HAMA_HOME/lib/ goffish-api/target/goffish-api-3.1.jar sample/target/goffish-sample-3.1.jar hama/v3.1/target/goffish-hama-3.1-jar-with-dependencies.jar
    ```
 
    General format of running goffish-hama job:
