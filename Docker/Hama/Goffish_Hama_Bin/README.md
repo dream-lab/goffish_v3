@@ -8,7 +8,7 @@ Follow these steps to build and run the image
  
     cd goffish_v3/Docker/Hama/Goffish_Hama_Bin
     
-    docker build -t sarthaksharma96/goffish-hama-bin .
+    docker build -t dreamlab/goffish3-hama-bin .
    
 ### or
 
@@ -16,7 +16,7 @@ Follow these steps to build and run the image
     
     You can always fetch the latest image for use, directly from the DockerHub.
     
-    https://hub.docker.com/r/sarthaksharma96/goffish-hama-bin/
+    https://hub.docker.com/r/dreamlab/goffish3-hama-bin/
 
 
 
@@ -34,7 +34,7 @@ You have several options to run this image:
 In order to use the Docker image you have just build or pulled use:
 
 ```
-sudo docker run -it --name namenode -h namenode sarthaksharma96/goffish-hama-bin /etc/bootstrap.sh -bash -namenode
+sudo docker run -it --name namenode -h namenode dreamlab/goffish3-hama-bin  /etc/bootstrap.sh -bash -namenode
 ```
 
 ### 1.2. Start the Slave/Worker container
@@ -42,13 +42,13 @@ sudo docker run -it --name namenode -h namenode sarthaksharma96/goffish-hama-bin
 In order to add worker nodes to the GoFFish cluster, use:
 
 ```
-sudo docker run -it --link namenode:namenode --dns=namenode sarthaksharma96/goffish-hama-bin /etc/bootstrap.sh -bash -datanode
+sudo docker run -it --link namenode:namenode --dns=namenode dreamlab/goffish3-hama-bin /etc/bootstrap.sh -bash -datanode
 ```
 
 ## 2. Deploy the cluster to Docker Swarm.
 In order to run GoFFish Cluster in distributed mode with Docker Compose (Version 3), first you need to prepare a [swarm cluster](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/).
 
-Once the Swarm cluster is set up, use the [goffish_cluster.sh](https://github.com/sarthaksharma/GoFFish_Hama_Docker/blob/master/Goffish_Hama_Bin/goffish_cluster.sh) on the Master Node to start, login, scale, visualise and stop the cluster.
+Once the Swarm cluster is set up, use the [goffish_cluster.sh](https://github.com/dream-lab/goffish_v3/blob/master/Docker/Hama/Goffish_Hama_Bin/goffish_cluster.sh) on the Master Node to start, login, scale, visualise and stop the cluster.
 
 ```
 ./goffish_cluster.sh start                              // To start the Cluster

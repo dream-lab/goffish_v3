@@ -1,7 +1,7 @@
 version: '3'
 services:
   namenode:
-    image: sarthaksharma96/goffish-hama-source
+    image: dreamlab/goffish3-hama-source
     hostname: namenode
     networks:
       - appnet
@@ -26,7 +26,7 @@ services:
   datanode:
     depends_on:
       - namenode
-    image: sarthaksharma96/goffish-hama-source
+    image: dreamlab/goffish3-hama-source
     networks:
       - appnet
     #resources:

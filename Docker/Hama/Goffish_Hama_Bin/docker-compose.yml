@@ -1,7 +1,7 @@
 version: '3'
 services:
   namenode:
-    image: sarthaksharma96/goffish-hama-bin
+    image: dreamlab/goffish3-hama-bin
     container_name: namenode
     hostname: namenode
     networks:
@@ -28,7 +28,7 @@ services:
   datanode:
     depends_on:
       - namenode
-    image: sarthaksharma96/goffish-hama-bin
+    image: dreamlab/goffish3-hama-bin
     container_name: datanode
     networks:
       - appnet

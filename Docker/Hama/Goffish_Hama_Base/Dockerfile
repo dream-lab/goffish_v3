@@ -1,7 +1,7 @@
-# sudo docker build -t sarthaksharma96/goffish-hama-base .
+# sudo docker build -t dreamlab/goffish3-hama-base .
 
 FROM tianon/centos:6.5
-MAINTAINER sarthaksharma96
+MAINTAINER dreamlab
 
 USER root
 

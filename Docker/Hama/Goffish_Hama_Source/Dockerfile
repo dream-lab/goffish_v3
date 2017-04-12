@@ -1,7 +1,7 @@
-# sudo docker build -t sarthaksharma96/goffish-hama-source .
+# sudo docker build -t dreamlab/goffish3-hama-source .
 
-FROM sarthaksharma96/goffish-hama-base
-MAINTAINER sarthaksharma96
+FROM dreamlab/goffish3-hama-base
+MAINTAINER dreamlab
 
 USER root
 

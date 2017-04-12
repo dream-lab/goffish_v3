@@ -20,7 +20,7 @@ Follow these steps to build the image
 2. **Build**
 
     ```
-    docker build -t sarthaksharma96/goffish-hama-base .
+    docker build -t dreamlab/goffish3-hama-base .
     
     ```
 
@@ -30,6 +30,6 @@ Follow these steps to build the image
 
 
 1. **Pull the image from Dockerhub**
-    You can always fetch the latest image for use, directly from the [DockerHub](https://hub.docker.com/r/sarthaksharma96/goffish-hama-base/).
+    You can always fetch the latest image for use, directly from the [DockerHub](https://hub.docker.com/r/dreamlab/goffish3-hama-base/).
 
 
