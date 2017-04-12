@@ -1,0 +1,52 @@
+
+if [ $# -eq 0 ]; then
+   
+	cat /root/ReadMe
+elif [ $1 == "init" ]; then
+	hadoop dfs -rmr /*
+	hadoop dfs -put $HADOOP_PREFIX/google-1P  /google-1P
+	hadoop dfs -put $HADOOP_PREFIX/google-4P  /google-4P
+	hadoop dfs -put $HADOOP_PREFIX/facebook-1P  /facebook-1P
+	hadoop dfs -put $HADOOP_PREFIX/facebook-4P  /facebook-4P
+	hadoop dfs -put $HADOOP_PREFIX/ca_road_network-4P  /ca_road_network-4P
+	jar tf $HAMA_HOME/lib/goffish-sample-3.1.jar |grep 'in/dream_lab/goffish/sample' | cut -d "/" -f 5 | cut -d "." -f 1 | grep -v '\$' >> algo_list
+	hadoop dfs -ls / | cut -d " " -f 19 >> graph_list
+
+	echo We are running GoFFish Version 3 on top of Apache-Hama\(0.7.2\) using Hadoop\(2.7.1\) as a storage mechanism for the graphs >> /root/ReadMe
+	echo Both HADOOP and HAMA are running in Distributed mode >> /root/ReadMe
+	echo >> /root/ReadMe
+	echo ********************AVAILABLE ALGORITHMS************************* >> /root/ReadMe
+	echo >> /root/ReadMe
+	cat algo_list >> /root/ReadMe
+	echo >> /root/ReadMe
+	echo ********************AVAILABLE  GRAPHS**************************** >> /root/ReadMe
+	cat graph_list >> /root/ReadMe
+	echo >> /root/ReadMe
+	echo ********************COMMAND  USAGE******************************* >> /root/ReadMe
+	echo >> /root/ReadMe
+	echo   goffish     run     algorithm    input-graph >> /root/ReadMe
+	echo >> /root/ReadMe
+	clear
+	echo ********************AVAILABLE ALGORITHMS*************************
+	echo
+	cat algo_list
+	echo
+	echo ********************AVAILABLE  GRAPHS****************************
+	cat graph_list
+	echo
+	echo ********************COMMAND  USAGE*******************************
+	echo
+	echo   goffish     run     algorithm    input-graph
+	echo
+	echo
+	echo Refer the \"ReadMe\" file for Details...
+	echo
+	echo
+elif [ $1 == "run" ]; then
+   
+	if [ $2 == "SingleSourceShortestPath" ]; then
+		hama in.dream_lab.goffish.job.DefaultJob  $HAMA_HOME/properties/SSSP.properties $3 output
+	else
+   		hama in.dream_lab.goffish.job.DefaultJob  $HAMA_HOME/properties/$2.properties $3 output
+	fi
+fi
