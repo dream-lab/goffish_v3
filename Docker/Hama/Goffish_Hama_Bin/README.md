@@ -48,6 +48,14 @@ sudo docker run -it --link namenode:namenode --dns=namenode dreamlab/goffish3-ha
 ## 2. Deploy the cluster to Docker Swarm.
 In order to run GoFFish Cluster in distributed mode with Docker Compose (Version 3), first you need to prepare a [swarm cluster](https://docs.docker.com/engine/swarm/swarm-tutorial/create-swarm/).
 
+
+Now we are ready to create an application private overlay network. Overlay network is the one that Docker will handle across distributed machines. It requires creating Consul or Zookeper to preserve state.
+
+```
+docker network create --driver overlay --subnet=10.0.9.0/24 appnet
+```
+
+
 Once the Swarm cluster is set up, use the [goffish_cluster.sh](https://github.com/dream-lab/goffish_v3/blob/master/Docker/Hama/Goffish_Hama_Bin/goffish_cluster.sh) on the Master Node to start, login, scale, visualise and stop the cluster.
 
 ```
