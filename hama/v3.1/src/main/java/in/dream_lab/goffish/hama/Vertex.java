@@ -80,6 +80,6 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   @SuppressWarnings("rawtypes")
   @Override
   public boolean equals(Object o) {
-    return this.vertexID == ((IVertex) o).getVertexId();
+    return (this.vertexID).equals(((IVertex) o).getVertexId());
   }
 }

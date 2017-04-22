@@ -24,6 +24,7 @@ import org.apache.hadoop.io.Writable;
 
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IRemoteVertex;
+import in.dream_lab.goffish.api.IVertex;
 
 public class RemoteVertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable, K extends Writable>
     implements IRemoteVertex<V, E, I, J, K> {
@@ -83,6 +84,12 @@ public class RemoteVertex<V extends Writable, E extends Writable, I extends Writ
   @Override
   public V getLocalState() {
     return _value;
+  }
+
+  @SuppressWarnings("rawtypes")
+  @Override
+  public boolean equals(Object o) {
+    return (this.vertexID).equals(((IVertex) o).getVertexId());
   }
 
 }
