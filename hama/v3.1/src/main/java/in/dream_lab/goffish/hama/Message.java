@@ -32,7 +32,14 @@ import in.dream_lab.goffish.hama.api.IControlMessage;
 public class Message<K extends Writable, M extends Writable>
     implements IMessage<K, M> {
 
-  private IMessage.MessageType messageType;
+  enum MessageType {
+    VERTEX, 
+    SUBGRAPH, 
+    CUSTOM_MESSAGE, 
+    MESSAGE_LIST
+  }
+  
+  private MessageType messageType;
   private K subgraphID;
   private boolean hasSubgraphID;
   private boolean hasMessage;
@@ -41,20 +48,20 @@ public class Message<K extends Writable, M extends Writable>
   private IControlMessage control;
 
   Message() {
-    this.messageType = IMessage.MessageType.CUSTOM_MESSAGE;
+    this.messageType = MessageType.CUSTOM_MESSAGE;
     this.hasSubgraphID = false;
     this.hasMessage = false;
     control = new ControlMessage();
   }
 
-  Message(IMessage.MessageType messageType, M msg) {
+  Message(MessageType messageType, M msg) {
     this();
     this.messageType = messageType;
     this.message = msg;
     this.hasMessage = true;
   }
 
-  Message(IMessage.MessageType messageType, K subgraphID, M msg) {
+  Message(MessageType messageType, K subgraphID, M msg) {
     this(messageType, msg);
     this.subgraphID = subgraphID;
     this.hasSubgraphID = true;
@@ -68,12 +75,11 @@ public class Message<K extends Writable, M extends Writable>
     return control;
   }
 
-  @Override
-  public in.dream_lab.goffish.api.IMessage.MessageType getMessageType() {
+  public MessageType getMessageType() {
     return messageType;
   }
 
-  public void setMessageType(IMessage.MessageType messageType) {
+  public void setMessageType(MessageType messageType) {
     this.messageType = messageType;
   }
 
@@ -105,7 +111,7 @@ public class Message<K extends Writable, M extends Writable>
   public void readFields(DataInput in) throws IOException {
     control = new ControlMessage();
     control.readFields(in);
-    messageType = WritableUtils.readEnum(in, IMessage.MessageType.class);
+    messageType = WritableUtils.readEnum(in, MessageType.class);
     hasSubgraphID = in.readBoolean();
     if (hasSubgraphID) {
       // TODO : Use reflection utils and instantiate

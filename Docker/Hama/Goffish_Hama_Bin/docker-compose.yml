@@ -1,0 +1,50 @@
+version: '3'
+services:
+  namenode:
+    image: dreamlab/goffish3-hama-bin
+    container_name: namenode
+    hostname: namenode
+    networks:
+      - appnet
+    domainname: appnet
+    ports:
+      - "8088:8088"
+      - "50090:50090"
+      - "19888:19888"
+      - "40013:40013"
+      - "40015:40015"
+    #resources:
+        #limits:
+        #cpus: '2'
+        #memory: 7000M
+    #volumes:
+      #- /home/sarthak/Docker_Share:/data
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+    command: "/etc/bootstrap.sh -d -namenode"
+
+  datanode:
+    depends_on:
+      - namenode
+    image: dreamlab/goffish3-hama-bin
+    container_name: datanode
+    networks:
+      - appnet
+    #resources:
+        # Soft limit - Docker makes best effort to return to it
+        #reservations:
+          #cpus: '1'
+          #memory: 4096M
+    deploy:
+      replicas: 4
+      placement:
+        constraints: [node.role != manager]
+    command: "/etc/bootstrap.sh -d -datanode"
+
+networks:
+  appnet:
+    external:
+      name: appnet
+

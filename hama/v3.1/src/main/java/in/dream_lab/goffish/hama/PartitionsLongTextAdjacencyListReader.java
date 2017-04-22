@@ -51,6 +51,7 @@ import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 import in.dream_lab.goffish.hama.utils.DisjointSets;
+import in.dream_lab.goffish.hama.Message.MessageType;
 
 
 /* Reads graph in the adjacency list format:
@@ -324,7 +325,7 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
     Set<LongWritable> visited = new HashSet<LongWritable>();
     Message<LongWritable, LongWritable> subgraphLocationBroadcast = new Message<LongWritable, LongWritable>();
     
-    subgraphLocationBroadcast.setMessageType(IMessage.MessageType.SUBGRAPH);
+    subgraphLocationBroadcast.setMessageType(MessageType.SUBGRAPH);
     ControlMessage controlInfo = new ControlMessage();
     controlInfo
         .setTransmissionType(IControlMessage.TransmissionType.BROADCAST);

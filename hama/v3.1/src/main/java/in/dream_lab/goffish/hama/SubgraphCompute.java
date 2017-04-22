@@ -56,6 +56,7 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
     voteToHalt = true;
   }
 
+  @Override
   public boolean hasVotedToHalt() {
     return voteToHalt;
   }

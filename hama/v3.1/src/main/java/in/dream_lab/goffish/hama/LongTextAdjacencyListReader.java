@@ -48,6 +48,7 @@ import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 import in.dream_lab.goffish.hama.utils.DisjointSets;
+import in.dream_lab.goffish.hama.Message.MessageType;
 
 /* Reads graph in the adjacency list format:
  * VID Sink1 Sink2 ...
@@ -250,7 +251,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
     long subgraphCount = 0;
     Message<LongWritable, LongWritable> subgraphLocationBroadcast = new Message<LongWritable, LongWritable>();
 
-    subgraphLocationBroadcast.setMessageType(IMessage.MessageType.SUBGRAPH);
+    subgraphLocationBroadcast.setMessageType(MessageType.SUBGRAPH);
     ControlMessage controlInfo = new ControlMessage();
     controlInfo.setTransmissionType(IControlMessage.TransmissionType.BROADCAST);
     subgraphLocationBroadcast.setControlInfo(controlInfo);

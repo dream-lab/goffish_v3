@@ -53,6 +53,7 @@ import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 import in.dream_lab.goffish.hama.utils.DisjointSets;
+import in.dream_lab.goffish.hama.Message.MessageType;
 
 /*
  * Reads the graph from JSON format
@@ -315,7 +316,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     Set<LongWritable> visited = new HashSet<LongWritable>();
     Message<LongWritable, LongWritable> subgraphLocationBroadcast = new Message<LongWritable, LongWritable>();
     
-    subgraphLocationBroadcast.setMessageType(IMessage.MessageType.SUBGRAPH);
+    subgraphLocationBroadcast.setMessageType(MessageType.SUBGRAPH);
     ControlMessage controlInfo = new ControlMessage();
     controlInfo
         .setTransmissionType(IControlMessage.TransmissionType.BROADCAST);

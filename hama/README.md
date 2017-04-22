@@ -8,7 +8,7 @@ Follow the steps to install GoFFish
 
     ```
     git clone https://github.com/dream-lab/goffish_v3
-    cd goffish_v3/api
+    cd goffish_v3/goffish-api
     mvn clean install						# Build api project
     cd ../sample
     mvn clean install						# Build sample project
@@ -65,7 +65,7 @@ Follow the steps to install GoFFish
 
    ```
    cd goffish_v3/
-   cp -t $HAMA_HOME/lib/ api/target/goffish-api-3.1.jar sample/target/goffish-sample-3.1.jar hama/v3.1/target/goffish-hama-3.1-jar-with-dependencies.jar
+   cp -t $HAMA_HOME/lib/ goffish-api/target/goffish-api-3.1.jar sample/target/goffish-sample-3.1.jar hama/v3.1/target/goffish-hama-3.1-jar-with-dependencies.jar
    ```
 
    General format of running goffish-hama job:
