@@ -29,7 +29,7 @@ import in.dream_lab.goffish.api.IVertex;
 
 public class Vertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable>
     implements IVertex<V, E, I, J> {
-  
+
   private List<IEdge<E, I, J>> _adjList;
   private I vertexID;
   private V _value;

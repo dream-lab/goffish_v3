@@ -63,7 +63,7 @@ class ControlMessage implements IControlMessage {
     }
 
     if (isPartitionMessage()) {
-      //out.writeInt(sourcePartitionID);
+      // out.writeInt(sourcePartitionID);
     } else if (isVertexMessage()) {
       vertexValues.write(out);
     }
@@ -82,7 +82,7 @@ class ControlMessage implements IControlMessage {
       extraInfo.add(info);
     }
     if (isPartitionMessage()) {
-      //sourcePartitionID = in.readInt();
+      // sourcePartitionID = in.readInt();
     } else if (isVertexMessage()) {
       vertexValues.readFields(in);
     }
@@ -138,18 +138,16 @@ class ControlMessage implements IControlMessage {
     return transmissionType == IControlMessage.TransmissionType.BROADCAST;
   }
 
-  //to be removed after clearing dependencies from LongTextjsonReader
+  // to be removed after clearing dependencies from LongTextjsonReader
   @Override
   public String toString() {
-    if(isPartitionMessage()) {
+    if (isPartitionMessage()) {
       return String.valueOf(sourcePartitionID);
-    }
-    else if (isVertexMessage()) {
+    } else if (isVertexMessage()) {
       return vertexValues.toString();
-    }
-    else {
+    } else {
       return null;
     }
   }
-  
+
 }

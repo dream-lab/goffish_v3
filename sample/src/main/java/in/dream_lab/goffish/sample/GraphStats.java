@@ -46,14 +46,14 @@ public class GraphStats extends
   private long _edgeCount = 0;
   private long _subgraphCount = 0;
   private long _metaGraphDiameter = 1;
-  private Map<Long,Long> _distanceMap = new HashMap<>();
+  private Map<Long, Long> _distanceMap = new HashMap<>();
   private List<Long> _probed = new ArrayList<>();
   private List<Long> _boundaryVertices = Lists.newArrayList();
   private HashSet<Long> _neighbours = Sets.newHashSet();
-  
+
   @Override
-  public void compute(
-      Iterable<IMessage<LongWritable, Text>> messages) throws IOException {
+  public void compute(Iterable<IMessage<LongWritable, Text>> messages)
+      throws IOException {
     /*
      * Vertex count,
      * edge count,
@@ -76,8 +76,8 @@ public class GraphStats extends
           .getRemoteVertices()) {
         _neighbours.add(remote.getSubgraphId().get());
       }
-      
-      //For finding boundary Vertices
+
+      // For finding boundary Vertices
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> v :getSubgraph().getLocalVertices()) {
 Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()) {
           if (getSubgraph().getVertexById(e.getSinkVertexId()).isRemote()) {
@@ -86,13 +86,13 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()
           }
         }
       }
-      
+
       return;
     }
-    
+
     if (getSuperstep() == 1) {
       for (IMessage<LongWritable, Text> message : messages) {
-        //number of messages received = number of subgraphs
+        // number of messages received = number of subgraphs
         _subgraphCount++;
         String msgString = message.getMessage().toString();
         String msgStringarr[] = msgString.split(";");
@@ -102,48 +102,47 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()
       System.out.println(_vertexCount + ";" + _edgeCount);
       return;
     }
-    
-    //Find Diameter of meta graph from this superstep
-    
-    if(getSuperstep() == 2) {
-      //create a probe message(messageType;subgraphid;distance to next node)
-      //P = Probe Message
-      //R = Reply Message
-      String msg = "P;"+getSubgraph().getSubgraphId().get() + ";"+2;
+
+    // Find Diameter of meta graph from this superstep
+
+    if (getSuperstep() == 2) {
+      // create a probe message(messageType;subgraphid;distance to next node)
+      // P = Probe Message
+      // R = Reply Message
+      String msg = "P;" + getSubgraph().getSubgraphId().get() + ";" + 2;
       _probed.add(getSubgraph().getSubgraphId().get());
-      //distance to itself is 1
+      // distance to itself is 1
       _distanceMap.put(getSubgraph().getSubgraphId().get(), new Long(1));
-      Text probeMessage = new Text (msg);
+      Text probeMessage = new Text(msg);
       sendToNeighbors(probeMessage);
       sendToAll(new Text("HasUpdates"));
       return;
     }
-    
+
     /*
      * true if any probe forwarded by this subgraph (signifies the algo is
      * progressing), i.e., we have update
      */
     boolean hasUpdates = false;
     /*
-     * true if any other subgraph is still alive ,i.e. , algo still
-     * progressing
+     * true if any other subgraph is still alive ,i.e. , algo still progressing
      */
     boolean progressing = false;
     /*
-     * when all values have been computed call the cleanup procedure to 
-     * display output
+     * when all values have been computed call the cleanup procedure to display
+     * output
      */
     boolean callCleanup = false;
-    
+
     for (IMessage<LongWritable, Text> recievedMessage : messages) {
-      
+
       if (recievedMessage.getMessage().toString().equals("HasUpdates")) {
-        progressing =true;
+        progressing = true;
         continue;
       }
-      
-      if(recievedMessage.getMessage().charAt(0) == 'D') {
-        //Diameter broadcast
+
+      if (recievedMessage.getMessage().charAt(0) == 'D') {
+        // Diameter broadcast
         String msgArr[] = recievedMessage.getMessage().toString().split(";");
         Long recievedDiameter = Long.parseLong(msgArr[1]);
         if (recievedDiameter > _metaGraphDiameter) {
@@ -152,54 +151,56 @@ Inner:  for (IEdge<LongWritable, LongWritable, LongWritable> e : v.getOutEdges()
         callCleanup = true;
         continue;
       }
-      
+
       String msg = recievedMessage.getMessage().toString();
       String msgArr[] = msg.split(";");
       Long subgraphID = Long.parseLong(msgArr[1]);
       Long distance = Long.parseLong(msgArr[2]);
       if (msgArr[0].equals("P")) {
         if (_probed.contains(subgraphID)) {
-          //already probed
+          // already probed
           continue;
         }
         hasUpdates = true;
         _probed.add(subgraphID);
-        //forward the probe to neighbours
-        String forwardProbeMsg = "P;"+subgraphID+";"+(distance+1);
+        // forward the probe to neighbours
+        String forwardProbeMsg = "P;" + subgraphID + ";" + (distance + 1);
         sendToNeighbors(new Text(forwardProbeMsg));
-        //reply with the distance to the probe initiator
-        String replyMsg = "R;"+getSubgraph().getSubgraphId().get()+";"+distance;
+        // reply with the distance to the probe initiator
+        String replyMsg = "R;" + getSubgraph().getSubgraphId().get() + ";"
+            + distance;
         sendMessage(new LongWritable(subgraphID), new Text(replyMsg));
       }
-      //if this the Reply message add it to the map
+      // if this the Reply message add it to the map
       else {
         _distanceMap.put(subgraphID, distance);
       }
     }
-    
+
     if (hasUpdates) {
       sendToAll(new Text("HasUpdates"));
     }
-    
+
     if (callCleanup) {
       cleanup();
       voteToHalt();
       return;
     }
-    
-    //if values have converged
+
+    // if values have converged
     if (!hasUpdates && !progressing) {
-      //broadcast the max diameter to everyone
-      for (Map.Entry<Long, Long> subgraphDistancepair : _distanceMap.entrySet()) {
+      // broadcast the max diameter to everyone
+      for (Map.Entry<Long, Long> subgraphDistancepair : _distanceMap
+          .entrySet()) {
         if (subgraphDistancepair.getValue() > _metaGraphDiameter) {
           _metaGraphDiameter = subgraphDistancepair.getValue();
         }
       }
-      String msg = "D;"+_metaGraphDiameter;
+      String msg = "D;" + _metaGraphDiameter;
       sendToAll(new Text(msg));
     }
-    
-    //voteToHalt();
+
+    // voteToHalt();
   }
 
   private void cleanup() {

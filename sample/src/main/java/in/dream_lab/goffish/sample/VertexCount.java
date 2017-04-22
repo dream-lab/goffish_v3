@@ -26,6 +26,7 @@ import in.dream_lab.goffish.api.AbstractSubgraphComputation;
 
 /**
  * Prints the total number of vertices in the graph across all nodes
+ * 
  * @author humus
  *
  */
@@ -34,8 +35,8 @@ public class VertexCount extends
     AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> {
 
   @Override
-  public void compute(
-      Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
+  public void compute(Iterable<IMessage<LongWritable, LongWritable>> messages)
+      throws IOException {
     if (getSuperstep() == 0) {
       long count = getSubgraph().getLocalVertexCount();
       LongWritable message = new LongWritable(count);

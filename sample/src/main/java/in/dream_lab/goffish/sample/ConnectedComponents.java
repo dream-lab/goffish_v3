@@ -31,8 +31,8 @@ public class ConnectedComponents extends
   long minSubgraphID;
 
   @Override
-  public void compute(
-      Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
+  public void compute(Iterable<IMessage<LongWritable, LongWritable>> messages)
+      throws IOException {
 
     if (getSuperstep() == 0) {
       minSubgraphID = getSubgraph().getSubgraphId().get();

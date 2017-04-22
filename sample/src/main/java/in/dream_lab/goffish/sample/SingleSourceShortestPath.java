@@ -161,14 +161,14 @@ public class SingleSourceShortestPath extends
       if (getSuperstep() == 0) {
 
         // get input variables from init message
-        if (Iterables.size(packedSubGraphMessages) == 0) {
+        /*if (Iterables.size(packedSubGraphMessages) == 0) {
           throw new RuntimeException(
               "Initial subgraph message was missing! Require sourceVertexID to be passed");
         }
 
         sourceVertexID = Long
             .parseLong(packedSubGraphMessages.iterator().next().getMessage().toString());
-
+*/
         log("Initializing source vertex = " + sourceVertexID);
 
         // Giraph:SimpleShortestPathsComputation.java:64

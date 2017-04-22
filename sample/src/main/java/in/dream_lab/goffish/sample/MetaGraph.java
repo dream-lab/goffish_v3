@@ -29,8 +29,8 @@ public class MetaGraph extends
     AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> {
 
   @Override
-  public void compute(
-      Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
+  public void compute(Iterable<IMessage<LongWritable, LongWritable>> messages)
+      throws IOException {
     if (getSuperstep() == 0) {
       long sid = getSubgraph().getSubgraphId().get();
       for (IRemoteVertex<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()

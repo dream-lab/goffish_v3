@@ -35,8 +35,8 @@ public class EdgeList extends
     AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable, LongWritable> {
 
   @Override
-  public void compute(
-      Iterable<IMessage<LongWritable, LongWritable>> messages) throws IOException {
+  public void compute(Iterable<IMessage<LongWritable, LongWritable>> messages)
+      throws IOException {
     if (getSuperstep() == 0) {
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {

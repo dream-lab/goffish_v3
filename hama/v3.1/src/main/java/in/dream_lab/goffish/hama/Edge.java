@@ -23,7 +23,7 @@ import in.dream_lab.goffish.api.IEdge;
 
 public class Edge<E extends Writable, I extends Writable, J extends Writable>
     implements IEdge<E, I, J> {
-  
+
   private E _value;
   private J edgeID;
   private I _sink;
