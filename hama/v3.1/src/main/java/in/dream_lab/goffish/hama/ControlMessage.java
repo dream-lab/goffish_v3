@@ -93,7 +93,7 @@ class ControlMessage implements IControlMessage {
   }
 
   public void setPartitionID(int partitionID) {
-    this.setPartitionID(partitionID);
+    this.sourcePartitionID = partitionID;
   }
 
   // remove this and just use extrainfo
