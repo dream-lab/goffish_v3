@@ -101,6 +101,10 @@ class ControlMessage implements IControlMessage {
   public void setPartitionID(int partitionID) {
     this.sourcePartitionID = partitionID;
   }
+  
+  public int getPartitionID() {
+    return this.sourcePartitionID;
+  }
 
   @Deprecated
   // remove this and just use extrainfo

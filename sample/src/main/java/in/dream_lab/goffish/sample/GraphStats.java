@@ -39,6 +39,24 @@ import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.api.AbstractSubgraphComputation;
 
+/**
+ * Prints:
+ * 
+ * Vertex count
+ * edge count
+ * number of subgraphs
+ * number of boundary vertices
+ * diameter (meta graph)
+ * each subgraph vertex and edge (local and remote) count
+ * Neighbor subgraph id's
+ * 
+ * @author humus
+ *
+ */
+
+// TODO: Meta graph Diameter is always 1 more than the actual diameter as the
+// diameter count starts from 2.. change it to 1 and resolve any other conflicts
+// due to this (if any)
 public class GraphStats extends
     AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, Text, LongWritable, LongWritable, LongWritable> {
 
@@ -54,16 +72,7 @@ public class GraphStats extends
   @Override
   public void compute(Iterable<IMessage<LongWritable, Text>> messages)
       throws IOException {
-    /*
-     * Vertex count,
-     * edge count,
-     * number of subgraphs.
-     * number of boundary vertices,
-     * diameter (meta graph),
-     * each subgraph vertex and edge (local and remote) count,
-     * neighbour subgraph ids
-     */
-    
+
     if (getSuperstep() == 0) {
       long vertexCount = getSubgraph().getLocalVertexCount();
       long edgeCount = Iterables.size(getSubgraph().getOutEdges());

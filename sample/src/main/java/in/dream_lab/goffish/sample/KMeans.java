@@ -2,7 +2,7 @@ package in.dream_lab.goffish.sample;
 
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IMessage;
-import in.dream_lab.goffish.api.AbstractSubgraphComputation;;
+import in.dream_lab.goffish.api.AbstractSubgraphComputation;
 import in.dream_lab.goffish.api.IRemoteVertex;
 import in.dream_lab.goffish.api.IVertex;
 import org.apache.commons.logging.Log;
