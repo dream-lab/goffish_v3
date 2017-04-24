@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import in.dream_lab.goffish.api.IVertex;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.BytesWritable;
@@ -40,6 +41,7 @@ import in.dream_lab.goffish.api.IRemoteVertex;
 import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
+import org.apache.hama.util.ReflectionUtils;
 
 /**
  * 
@@ -180,11 +182,10 @@ public class FullInfoSplitReader<S extends Writable, V extends Writable, E exten
           partitionID, vertexSubgraphID);
       partition.addSubgraph(subgraph);
     }
-    Vertex<V, E, LongWritable, LongWritable> vertex = (Vertex<V, E, LongWritable, LongWritable>) subgraph
-        .getVertexById(vertexID);
+    IVertex<V, E, LongWritable, LongWritable> vertex = subgraph.getVertexById(vertexID);
     if (vertex == null) {
       // vertex not added already
-      vertex = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+      vertex = createVertex(vertexID);
       subgraph.addVertex(vertex);
     }
 
@@ -216,9 +217,13 @@ public class FullInfoSplitReader<S extends Writable, V extends Writable, E exten
         // component
         subgraph.addVertex(sink);
       } else {
-        Vertex<V, E, LongWritable, LongWritable> sink = new Vertex<>(sinkID);
+        IVertex<V, E, LongWritable, LongWritable> sink = createVertex(sinkID);
         subgraph.addVertex(sink);
       }
     }
+  }
+  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
+            new Object[] {vertexID});
   }
 }

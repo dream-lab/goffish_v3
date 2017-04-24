@@ -92,8 +92,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
       String vertexValue[] = stringInput.split("\\s+");
 
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-      Vertex<V, E, LongWritable, LongWritable> vertex = new Vertex<V, E, LongWritable, LongWritable>(
-          vertexID);
+      IVertex<V, E, LongWritable, LongWritable> vertex = createVertex(vertexID);
 
       for (int j = 1; j < vertexValue.length; j++) {
         LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
@@ -234,6 +233,11 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
       }
     }
     return partition.getSubgraphs();
+  }
+
+  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
+            new Object[] {vertexID});
   }
 
   private void sendToAllPartitions(Message<LongWritable, LongWritable> message)

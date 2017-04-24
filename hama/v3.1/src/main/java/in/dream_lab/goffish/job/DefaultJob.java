@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import in.dream_lab.goffish.api.IVertex;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Writable;
@@ -41,6 +42,7 @@ import in.dream_lab.goffish.hama.LongTextAdjacencyListReader;
 import in.dream_lab.goffish.hama.NonSplitTextInputFormat;
 import in.dream_lab.goffish.hama.api.IReader;
 
+//TODO: Check null properties
 public class DefaultJob {
 
   public static void main(String args[]) throws IOException,
@@ -75,15 +77,20 @@ public class DefaultJob {
     // Reader configuration
 
     String inputFormatClass = prop.getProperty("inputFormatClass");
-    job.setInputFormat((Class<? extends InputFormat>)Class.forName(inputFormatClass));
+    if (inputFormatClass != null)
+      job.setInputFormat((Class<? extends InputFormat>)Class.forName(inputFormatClass));
 
     String inputReaderClass = prop.getProperty("inputReaderClass");
-    job.setInputReaderClass((Class<? extends IReader>)Class.forName(inputReaderClass));
+    if (inputReaderClass != null)
+      job.setInputReaderClass((Class<? extends IReader>)Class.forName(inputReaderClass));
+
+    String vertexClass = prop.getProperty("vertexClass");
+    if (vertexClass != null)
+      job.setVertexClass((Class<? extends IVertex>)Class.forName(vertexClass));
     
     String initialInput = prop.getProperty("initialInput");
-    if (initialInput != null) {
+    if (initialInput != null)
       job.setInitialInput(initialInput);
-    }
 
     // Blocks till job completed
     job.waitForCompletion(true);

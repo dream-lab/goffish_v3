@@ -72,6 +72,16 @@ public class RemoteVertex<V extends Writable, E extends Writable, I extends Writ
   }
 
   @Override
+  public IEdge<E, I, J> getEdgeByVertexId(I i) {
+    throw new NotImplementedException("Remote Vertex does not edges");
+  }
+
+  @Override
+  public void addEdge(IEdge<E, I, J> iEdge) {
+    throw new NotImplementedException("Remote Vertex can not add edges");
+  }
+
+  @Override
   public K getSubgraphId() {
     return subgraphID;
   }

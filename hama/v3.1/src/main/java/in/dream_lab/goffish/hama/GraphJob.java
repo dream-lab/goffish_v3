@@ -19,6 +19,7 @@ package in.dream_lab.goffish.hama;
 
 import java.io.IOException;
 
+import in.dream_lab.goffish.api.IVertex;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
@@ -52,6 +53,8 @@ public class GraphJob extends BSPJob {
   public final static String SUBGRAPH_ID_CLASS_ATTR = "in.dream_lab.goffish.subgraphid.class";
   public final static String SUBGRAPH_VALUE_CLASS_ATTR = "in.dream_lab.goffish.subgraphvalue.class";
   public final static String READER_CLASS_ATTR = "in.dream_lab.goffish.reader.class";
+  public final static String VERTEX_CLASS_ATTR = "in.dream_lab.goffish.vertex.class";
+
 
   public final static String INITIAL_VALUE = "in.dream_lab.goffish.initialvalue";
 
@@ -138,6 +141,9 @@ public class GraphJob extends BSPJob {
     conf.setClass(GRAPH_MESSAGE_CLASS_ATTR, cls, Writable.class);
   }
 
+  public void setVertexClass(Class<? extends IVertex> cls) {
+    conf.setClass(VERTEX_CLASS_ATTR, cls, IVertex.class);
+  }
   /**
    * Use RicherSubgraph Class instead of Subgraph for more features
    */

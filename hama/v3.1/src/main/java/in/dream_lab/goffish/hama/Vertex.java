@@ -39,12 +39,23 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
     _adjList = new LinkedList<IEdge<E, I, J>>();
   }
 
+  Vertex(Integer a) {
+  }
+
+
   Vertex(I ID) {
     this();
     vertexID = ID;
   }
 
-  void addEdge(IEdge<E, I, J> edge) {
+  Vertex(I Id, Iterable<IEdge<E, I, J>> edges) {
+    this(Id);
+    for (IEdge<E, I, J> e : edges)
+      _adjList.add(e);
+  }
+
+  @Override
+  public void addEdge(IEdge<E, I, J> edge) {
     _adjList.add(edge);
   }
 

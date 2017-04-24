@@ -39,7 +39,14 @@ public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I ext
     vertexID = ID;
   }
 
-  void addEdge(IEdge<E, I, J> edge) {
+  VertexWithAdjacentSet(I Id, Iterable<IEdge<E, I, J>> edges) {
+    this(Id);
+    for (IEdge<E, I, J> e : edges)
+      _adjSet.put(e.getSinkVertexId(), e);
+  }
+
+  @Override
+  public void addEdge(IEdge<E, I, J> edge) {
     _adjSet.put(edge.getSinkVertexId(), edge);
   }
 

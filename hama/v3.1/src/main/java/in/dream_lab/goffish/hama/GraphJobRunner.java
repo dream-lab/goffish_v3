@@ -102,6 +102,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   private Map<K, Integer> subgraphPartitionMap;
   private static Class<?> SUBGRAPH_CLASS;
   public static Class<? extends Writable> GRAPH_MESSAGE_CLASS;
+  public static Class<? extends IVertex> VERTEX_CLASS;
   
   //public static Class<Subgraph<?, ?, ?, ?, ?, ?, ?>> subgraphClass;
   private Map<K, List<IMessage<K, M>>> subgraphMessageMap;
@@ -147,7 +148,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     Class<M> graphMessageClass = (Class<M>) conf.getClass(
         GraphJob.GRAPH_MESSAGE_CLASS_ATTR, IntWritable.class, Writable.class);
     GRAPH_MESSAGE_CLASS = graphMessageClass;
-    
+
+    Class<? extends IVertex> vertexClass = (Class<? extends IVertex>) conf.getClass(
+            GraphJob.VERTEX_CLASS_ATTR, Vertex.class, IVertex.class);
+    VERTEX_CLASS = vertexClass;
   }
 
    

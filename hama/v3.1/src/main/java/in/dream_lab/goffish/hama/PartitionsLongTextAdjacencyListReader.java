@@ -110,8 +110,8 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
         partitionVertices.add(stringInput);
       } else {
         LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-        Vertex<V, E, LongWritable, LongWritable> vertex;
-        vertex = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+        IVertex<V, E, LongWritable, LongWritable> vertex;
+        vertex = createVertex(vertexID);
 
         for (int j = 2; j < vertexValue.length; j++) {
           LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
@@ -159,10 +159,10 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
       String vertexInfo[] = msgString.split("\\s+");
       
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexInfo[0]));
-      Vertex<V, E, LongWritable, LongWritable> source = (Vertex<V, E, LongWritable, LongWritable>) vertexMap
+      IVertex<V, E, LongWritable, LongWritable> source = (Vertex<V, E, LongWritable, LongWritable>) vertexMap
           .get(vertexID);
       if (source == null) {
-        source = new Vertex<V, E, LongWritable, LongWritable>(vertexID);
+        source = createVertex(vertexID);
         vertexMap.put(source.getVertexId(), source);
       }
       for (int j = 2; j < vertexInfo.length; j++) {
@@ -296,6 +296,11 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
     }
 
     return partition.getSubgraphs();
+  }
+
+  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
+            new Object[] {vertexID});
   }
 
   /*

@@ -108,7 +108,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
         }
         partitionVertices.add(StringJSONInput);
       } else {
-        Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(
+        IVertex<V, E, LongWritable, LongWritable> vertex = createVertex(
             StringJSONInput);
         vertexMap.put(vertex.getVertexId(), vertex);
         for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
@@ -137,7 +137,7 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
     Message<LongWritable, LongWritable> msg;
     while ((msg = (Message<LongWritable, LongWritable>)peer.getCurrentMessage()) != null) {
       String JSONVertex = msg.getControlInfo().toString();
-      Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(JSONVertex);
+      IVertex<V, E, LongWritable, LongWritable> vertex = createVertex(JSONVertex);
       vertexMap.put(vertex.getVertexId(), vertex);
       for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
         _edges.add(e);
@@ -280,15 +280,16 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
   }
   
   @SuppressWarnings("unchecked")
-  Vertex<V, E, LongWritable, LongWritable> createVertex(String JSONString) {
+  IVertex<V, E, LongWritable, LongWritable> createVertex(String JSONString) {
     JSONArray JSONInput = (JSONArray) JSONValue.parse(JSONString);
 
     LongWritable sourceID = new LongWritable(
         Long.valueOf(JSONInput.get(0).toString()));
     assert (vertexMap.get(sourceID) == null);
 
-    Vertex<V, E, LongWritable, LongWritable> vertex = new Vertex<V, E, LongWritable, LongWritable>(
-        sourceID);
+    IVertex<V, E, LongWritable, LongWritable> vertex = ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS,
+            new Class<?>[] {Writable.class}, new Object[] {sourceID});
+
     //fix this
     V value = (V) new Text(JSONInput.get(2).toString());
     
