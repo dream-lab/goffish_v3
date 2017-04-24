@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -123,7 +124,7 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
         }
         
         vertexMap.put(vertex.getVertexId(), vertex);
-        _edges.addAll(vertex.getOutEdges());
+        _edges.addAll(Lists.newArrayList(vertex.getOutEdges()));
       }
     }
 

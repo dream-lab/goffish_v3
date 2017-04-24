@@ -17,35 +17,30 @@
  */
 package in.dream_lab.goffish.hama;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.apache.hadoop.io.Writable;
-
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IVertex;
+import org.apache.hadoop.io.Writable;
 
-public class Vertex<V extends Writable, E extends Writable, I extends Writable, J extends Writable>
+import java.util.*;
+
+public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I extends Writable, J extends Writable>
     implements IVertex<V, E, I, J> {
-  
-  private List<IEdge<E, I, J>> _adjList;
+
+  private Set<IEdge<E, I, J>> _adjSet;
   private I vertexID;
   private V _value;
 
-  // Change to ArrayList for larger graphs (more memory efficient)
-  Vertex() {
-    _adjList = new LinkedList<IEdge<E, I, J>>();
+  VertexWithAdjacentSet() {
+    _adjSet = new HashSet<IEdge<E, I, J>>();
   }
 
-  Vertex(I ID) {
+  VertexWithAdjacentSet(I ID) {
     this();
     vertexID = ID;
   }
 
   void addEdge(IEdge<E, I, J> edge) {
-    _adjList.add(edge);
+    _adjSet.add(edge);
   }
 
   void setVertexID(I vertexID) {
@@ -64,7 +59,7 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
 
   @Override
   public Iterable<IEdge<E, I, J>> getOutEdges() {
-    return _adjList;
+    return _adjSet;
   }
 
   @Override
