@@ -111,7 +111,8 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
         Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(
             StringJSONInput);
         vertexMap.put(vertex.getVertexId(), vertex);
-        _edges.addAll(Lists.newArrayList(vertex.getOutEdges()));
+        for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
+          _edges.add(e);
       }
     }
 
@@ -138,7 +139,8 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       String JSONVertex = msg.getControlInfo().toString();
       Vertex<V, E, LongWritable, LongWritable> vertex = createVertex(JSONVertex);
       vertexMap.put(vertex.getVertexId(), vertex);
-      _edges.addAll(Lists.newArrayList(vertex.getOutEdges()));
+      for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
+        _edges.add(e);
     }
     
     /* Create remote vertex objects. */

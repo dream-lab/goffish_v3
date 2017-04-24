@@ -124,7 +124,8 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
         }
         
         vertexMap.put(vertex.getVertexId(), vertex);
-        _edges.addAll(Lists.newArrayList(vertex.getOutEdges()));
+        for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
+          _edges.add(e);
       }
     }
 
