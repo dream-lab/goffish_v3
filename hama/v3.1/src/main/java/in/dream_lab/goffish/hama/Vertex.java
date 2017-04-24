@@ -34,14 +34,9 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   private I vertexID;
   private V _value;
 
-  // Change to ArrayList for larger graphs (more memory efficient)
   Vertex() {
-    _adjList = new LinkedList<IEdge<E, I, J>>();
+    _adjList = new ArrayList<IEdge<E, I, J>>();
   }
-
-  Vertex(Integer a) {
-  }
-
 
   Vertex(I ID) {
     this();
