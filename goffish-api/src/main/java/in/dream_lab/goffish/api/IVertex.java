@@ -40,4 +40,6 @@ public interface IVertex<V extends Writable, E extends Writable, I extends Writa
   V getValue();
 
   void setValue(V value);
+
+  IEdge<E, I, J> getEdgeByVertexId(I vertexId);
 }

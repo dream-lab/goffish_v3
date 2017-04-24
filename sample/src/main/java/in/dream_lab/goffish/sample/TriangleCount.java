@@ -53,7 +53,6 @@ public class TriangleCount extends
     AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, Text, LongWritable, LongWritable, LongWritable> {
   private long triangleCount, totalCount;
   StringBuilder trianglesList;
-  Map<Long, Set<Long>> adjSet;
 
   // To represent sender and message content.
   private class Pair<L, R> {
@@ -69,21 +68,7 @@ public class TriangleCount extends
   @Override
   public void compute(Iterable<IMessage<LongWritable, Text>> messageList) throws IOException {
 
-    // Convert adjacency list to adjacency set
     if (getSuperstep() == 0) {
-      // trianglesList = new StringBuilder();
-      adjSet = new HashMap<Long, Set<Long>>();
-      for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
-          .getLocalVertices()) {
-        Set<Long> adjVertices = new HashSet<Long>();
-        for (IEdge<LongWritable, LongWritable, LongWritable> edge : vertex
-            .getOutEdges()) {
-          adjVertices.add(edge.getSinkVertexId().get());
-        }
-        adjSet.put(vertex.getVertexId().get(), adjVertices);
-      }
-      return;
-    } else if (getSuperstep() == 1) {
       Map<Long, StringBuilder> msg = new HashMap<Long, StringBuilder>();
       for (IVertex<LongWritable, LongWritable, LongWritable, LongWritable> vertex : getSubgraph()
           .getLocalVertices()) {
@@ -121,8 +106,7 @@ public class TriangleCount extends
             if (adjAdjVertex.isRemote() || adjAdjVertex.getVertexId()
                 .get() > adjVertex.getVertexId().get()) {
 
-              if (adjSet.get(vertex.getVertexId().get())
-                  .contains(adjAdjVertex.getVertexId().get())) {
+              if (vertex.getEdgeByVertexId(adjAdjVertex.getVertexId()) != null) {
                 triangleCount++;
                 // trianglesList.append(vertex.getVertexID().get() + " " +
                 // adjVertex.getVertexID().get()
@@ -133,7 +117,7 @@ public class TriangleCount extends
         }
       }
       sendPackedMessages(msg);
-    } else if (getSuperstep() == 2) {
+    } else if (getSuperstep() == 1) {
       Map<Long, List<Pair<Long, Long>>> ids = new HashMap<Long, List<Pair<Long, Long>>>();
       unpackMessages(messageList, ids);
 

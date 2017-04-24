@@ -77,6 +77,14 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
     _value = value;
   }
 
+  @Override
+  public IEdge<E, I, J> getEdgeByVertexId(I vertexID) {
+    for (IEdge<E, I, J> e : _adjList)
+      if (e.getSinkVertexId().equals(vertexID))
+        return e;
+    return null;
+  }
+
   @SuppressWarnings("rawtypes")
   @Override
   public boolean equals(Object o) {

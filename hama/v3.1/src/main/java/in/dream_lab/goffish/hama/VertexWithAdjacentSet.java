@@ -26,12 +26,12 @@ import java.util.*;
 public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I extends Writable, J extends Writable>
     implements IVertex<V, E, I, J> {
 
-  private Set<IEdge<E, I, J>> _adjSet;
+  private Map<I, IEdge<E, I, J>> _adjSet;
   private I vertexID;
   private V _value;
 
   VertexWithAdjacentSet() {
-    _adjSet = new HashSet<IEdge<E, I, J>>();
+    _adjSet = new HashMap<I, IEdge<E, I, J>>();
   }
 
   VertexWithAdjacentSet(I ID) {
@@ -40,7 +40,7 @@ public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I ext
   }
 
   void addEdge(IEdge<E, I, J> edge) {
-    _adjSet.add(edge);
+    _adjSet.put(edge.getSinkVertexId(), edge);
   }
 
   void setVertexID(I vertexID) {
@@ -59,7 +59,12 @@ public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I ext
 
   @Override
   public Iterable<IEdge<E, I, J>> getOutEdges() {
-    return _adjSet;
+    return _adjSet.values();
+  }
+
+  @Override
+  public IEdge<E, I, J> getEdgeByVertexId(I vertexID) {
+    return _adjSet.get(vertexID);
   }
 
   @Override
