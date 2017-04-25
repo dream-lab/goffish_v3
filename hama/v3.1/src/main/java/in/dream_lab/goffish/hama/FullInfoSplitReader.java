@@ -95,7 +95,7 @@ public class FullInfoSplitReader<S extends Writable, V extends Writable, E exten
       String stringInput = pair.getValue().toString();
       // pid is the first column and its range is 0 to max pid
       int partitionID = Integer
-          .parseInt(stringInput.substring(0, stringInput.indexOf(' ')));
+          .parseInt(stringInput.substring(0, stringInput.indexOf('\t')));
       LOG.debug("partitionID = "+partitionID);
       
       if (partitionID != peer.getPeerIndex()) {
@@ -185,7 +185,7 @@ public class FullInfoSplitReader<S extends Writable, V extends Writable, E exten
     IVertex<V, E, LongWritable, LongWritable> vertex = subgraph.getVertexById(vertexID);
     if (vertex == null) {
       // vertex not added already
-      vertex = createVertex(vertexID);
+      vertex = createVertexInstance(vertexID);
       subgraph.addVertex(vertex);
     }
 
@@ -217,12 +217,13 @@ public class FullInfoSplitReader<S extends Writable, V extends Writable, E exten
         // component
         subgraph.addVertex(sink);
       } else {
-        IVertex<V, E, LongWritable, LongWritable> sink = createVertex(sinkID);
+        IVertex<V, E, LongWritable, LongWritable> sink = createVertexInstance(sinkID);
         subgraph.addVertex(sink);
       }
     }
   }
-  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
+  
+  private IVertex<V, E, LongWritable, LongWritable> createVertexInstance(LongWritable vertexID) {
     return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
             new Object[] {vertexID});
   }
