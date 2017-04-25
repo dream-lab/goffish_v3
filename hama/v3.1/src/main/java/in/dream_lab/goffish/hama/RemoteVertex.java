@@ -72,7 +72,7 @@ public class RemoteVertex<V extends Writable, E extends Writable, I extends Writ
   }
 
   @Override
-  public IEdge<E, I, J> getEdgeByVertexId(I i) {
+  public IEdge<E, I, J> getOutEdge(I i) {
     throw new NotImplementedException("Remote Vertex does not edges");
   }
 

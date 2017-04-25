@@ -106,7 +106,7 @@ public class TriangleCount extends
             if (adjAdjVertex.isRemote() || adjAdjVertex.getVertexId()
                 .get() > adjVertex.getVertexId().get()) {
 
-              if (vertex.getEdgeByVertexId(adjAdjVertex.getVertexId()) != null) {
+              if (vertex.getOutEdge(adjAdjVertex.getVertexId()) != null) {
                 triangleCount++;
                 // trianglesList.append(vertex.getVertexID().get() + " " +
                 // adjVertex.getVertexID().get()

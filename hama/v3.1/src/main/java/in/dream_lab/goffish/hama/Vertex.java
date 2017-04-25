@@ -84,7 +84,7 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
   }
 
   @Override
-  public IEdge<E, I, J> getEdgeByVertexId(I vertexID) {
+  public IEdge<E, I, J> getOutEdge(I vertexID) {
     for (IEdge<E, I, J> e : _adjList)
       if (e.getSinkVertexId().equals(vertexID))
         return e;

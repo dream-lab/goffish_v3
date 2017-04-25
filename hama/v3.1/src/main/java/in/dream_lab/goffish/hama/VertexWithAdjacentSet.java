@@ -70,7 +70,7 @@ public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I ext
   }
 
   @Override
-  public IEdge<E, I, J> getEdgeByVertexId(I vertexID) {
+  public IEdge<E, I, J> getOutEdge(I vertexID) {
     return _adjSet.get(vertexID);
   }
 
