@@ -19,11 +19,12 @@
 package in.dream_lab.goffish.hama;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import in.dream_lab.goffish.api.IVertex;
+import in.dream_lab.goffish.api.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.BytesWritable;
@@ -37,9 +38,6 @@ import org.apache.hama.commons.util.KeyValuePair;
 
 import com.google.common.primitives.Longs;
 
-import in.dream_lab.goffish.api.IMessage;
-import in.dream_lab.goffish.api.IRemoteVertex;
-import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 import org.apache.hama.util.ReflectionUtils;
@@ -183,12 +181,7 @@ public class FullInfoSplitReaderInt<S extends Writable, V extends Writable, E ex
           partitionID, vertexSubgraphID);
       partition.addSubgraph(subgraph);
     }
-    IVertex<V, E, LongWritable, IntWritable> vertex = subgraph.getVertexById(vertexID);
-    if (vertex == null) {
-      // vertex not added already
-      vertex = createVertexInstance(vertexID);
-      subgraph.addVertex(vertex);
-    }
+    List<IEdge<E, LongWritable, IntWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, IntWritable>>();
 
     for (int j = 3; j < vertexValue.length; j++) {
       if (j + 3 > vertexValue.length) {
@@ -203,29 +196,21 @@ public class FullInfoSplitReaderInt<S extends Writable, V extends Writable, E ex
           edgeCount++ | (( peer.getPeerIndex()) << 27));
       Edge<E, LongWritable, IntWritable> e = new Edge<E, LongWritable, IntWritable>(
           edgeID, sinkID);
-      vertex.addEdge(e);
-      if (subgraph.getVertexById(sinkID) != null) {
-        // If vertex already created its already added to its correct
-        // subgraph
-        continue;
-      }
-      // If sink does not exist create new one
-      if (sinkPartitionID != peer.getPeerIndex()) {
+      _adjList.add(e);
+      if (sinkPartitionID != peer.getPeerIndex() && subgraph.getVertexById(sinkID) == null) {
         // this is a remote vertex
         IRemoteVertex<V, E, LongWritable, IntWritable, LongWritable> sink = new RemoteVertex<>(
             sinkID, sinkSubgraphID);
         // Add it to the same subgraph, as this is part of weakly connected
         // component
         subgraph.addVertex(sink);
-      } else {
-        IVertex<V, E, LongWritable, IntWritable> sink = createVertexInstance(sinkID);
-        subgraph.addVertex(sink);
       }
     }
+    subgraph.addVertex(createVertexInstance(vertexID, _adjList));
   }
 
-  private IVertex<V, E, LongWritable, IntWritable> createVertexInstance(LongWritable vertexID) {
-    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
-            new Object[] {vertexID});
+  private IVertex<V, E, LongWritable, IntWritable> createVertexInstance(LongWritable vertexID, List<IEdge<E, LongWritable, IntWritable>> adjList) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class, Iterable.class},
+            new Object[] {vertexID, adjList});
   }
 }

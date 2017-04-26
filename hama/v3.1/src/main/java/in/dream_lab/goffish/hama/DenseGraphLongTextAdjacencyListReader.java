@@ -133,21 +133,16 @@ public class DenseGraphLongTextAdjacencyListReader<S extends Writable, V extends
       String vertexValue[] = stringInput.split("\\s+");
       
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-      IVertex<V, E, LongWritable, LongWritable> vertex = createVertex(vertexID);
-      if (count % 10000 == 0) {
-          //LOG.info("Read " + count + " lines. Size of vertex adjacency list: " + vertexValue.length);
-      }
+      List<IEdge<E, LongWritable, LongWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
+
       for (int j = 1; j < vertexValue.length; j++) {
         LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
         LongWritable edgeID = new LongWritable(
                 edgeCount++ | (((long) peer.getPeerIndex()) << 32));
         Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(edgeID, sinkID);
-        vertex.addEdge(e);
+        _adjList.add(e);
       }
-      if (count % 10000 == 0) {
-        //LOG.info("Created vertex object.");
-      }
-      vertexMap.put(vertexID.get(), vertex);
+      vertexMap.put(vertexID.get(), createVertexInstance(vertexID, _adjList));
 
     }
 
@@ -259,9 +254,9 @@ public class DenseGraphLongTextAdjacencyListReader<S extends Writable, V extends
     return partition.getSubgraphs();
   }
 
-  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
-    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
-            new Object[] {vertexID});
+  private IVertex<V, E, LongWritable, LongWritable> createVertexInstance(LongWritable vertexID, List<IEdge<E, LongWritable, LongWritable>> adjList) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class, Iterable.class},
+            new Object[] {vertexID, adjList});
   }
 
   private void sendToAllPartitions(Message<LongWritable, LongWritable> message)

@@ -18,11 +18,7 @@
 package in.dream_lab.goffish.hama;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -92,7 +88,7 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
       String vertexValue[] = stringInput.split("\\s+");
 
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-      IVertex<V, E, LongWritable, LongWritable> vertex = createVertex(vertexID);
+      List<IEdge<E, LongWritable, LongWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
 
       for (int j = 1; j < vertexValue.length; j++) {
         LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
@@ -100,10 +96,10 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
             edgeCount++ | (((long) peer.getPeerIndex()) << 32));
         Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
             edgeID, sinkID);
-        vertex.addEdge(e);
+        _adjList.add(e);
       }
 
-      vertexMap.put(vertexID.get(), vertex);
+      vertexMap.put(vertexID.get(), createVertexInstance(vertexID, _adjList));
 
     }
 
@@ -235,9 +231,9 @@ public class LongTextAdjacencyListReader<S extends Writable, V extends Writable,
     return partition.getSubgraphs();
   }
 
-  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
-    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
-            new Object[] {vertexID});
+  private IVertex<V, E, LongWritable, LongWritable> createVertexInstance(LongWritable vertexID, List<IEdge<E, LongWritable, LongWritable>> adjList) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class, Iterable.class},
+            new Object[] {vertexID, adjList});
   }
 
   private void sendToAllPartitions(Message<LongWritable, LongWritable> message)

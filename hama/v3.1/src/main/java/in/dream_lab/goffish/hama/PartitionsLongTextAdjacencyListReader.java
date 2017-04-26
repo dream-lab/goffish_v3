@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.collect.Lists;
+import in.dream_lab.goffish.api.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -45,10 +46,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
-import in.dream_lab.goffish.api.IEdge;
-import in.dream_lab.goffish.api.IMessage;
-import in.dream_lab.goffish.api.ISubgraph;
-import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 import in.dream_lab.goffish.hama.utils.DisjointSets;
@@ -86,7 +83,6 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
     
     Map<Integer, List<String>> partitionMap = new HashMap<Integer, List<String>>();
     vertexMap = new HashMap<LongWritable, IVertex<V, E, LongWritable, LongWritable>>();
-    // List of edges.Used to create RemoteVertices
     List<IEdge<E, LongWritable, LongWritable>> _edges = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
 
     long edgeCount = 0;
@@ -110,22 +106,18 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
         partitionVertices.add(stringInput);
       } else {
         LongWritable vertexID = new LongWritable(Long.parseLong(vertexValue[0]));
-        IVertex<V, E, LongWritable, LongWritable> vertex;
-        vertex = createVertex(vertexID);
+        List<IEdge<E, LongWritable, LongWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
 
         for (int j = 2; j < vertexValue.length; j++) {
           LongWritable sinkID = new LongWritable(Long.parseLong(vertexValue[j]));
           LongWritable edgeID = new LongWritable(
               edgeCount++ | (((long) peer.getPeerIndex()) << 32));
-          Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
+          IEdge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
               edgeID, sinkID);
-          vertex.addEdge(e);
+          _adjList.add(e);
           _edges.add(e);
         }
-        
-        vertexMap.put(vertex.getVertexId(), vertex);
-        for (IEdge<E, LongWritable, LongWritable> e : vertex.getOutEdges())
-          _edges.add(e);
+        vertexMap.put(vertexID, createVertexInstance(vertexID, _adjList));
       }
     }
 
@@ -157,23 +149,20 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
       // String msgStringArr[] = msgString.split(",");
       // for (int i = 0; i < msgStringArr.length; i++) {
       String vertexInfo[] = msgString.split("\\s+");
-      
       LongWritable vertexID = new LongWritable(Long.parseLong(vertexInfo[0]));
-      IVertex<V, E, LongWritable, LongWritable> source = (Vertex<V, E, LongWritable, LongWritable>) vertexMap
-          .get(vertexID);
-      if (source == null) {
-        source = createVertex(vertexID);
-        vertexMap.put(source.getVertexId(), source);
-      }
+      List<IEdge<E, LongWritable, LongWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
+
       for (int j = 2; j < vertexInfo.length; j++) {
         LongWritable sinkID = new LongWritable(Long.parseLong(vertexInfo[j]));
         LongWritable edgeID = new LongWritable(
             edgeCount++ | (((long) peer.getPeerIndex()) << 32));
         Edge<E, LongWritable, LongWritable> e = new Edge<E, LongWritable, LongWritable>(
             edgeID, sinkID);
-        source.addEdge(e);
+        _adjList.add(e);
         _edges.add(e);
       }
+      vertexMap.put(vertexID, createVertexInstance(vertexID, _adjList));
+
     }
     //}
     
@@ -188,7 +177,7 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
         vertexMap.put(sinkID, sink);
       }
     }
-    
+
     Partition<S, V, E, LongWritable, LongWritable, LongWritable> partition = new Partition<S, V, E, LongWritable, LongWritable, LongWritable>(peer.getPeerIndex());
 
     LOG.debug("Calling formSubgraph()");
@@ -298,9 +287,9 @@ public class PartitionsLongTextAdjacencyListReader<S extends Writable, V extends
     return partition.getSubgraphs();
   }
 
-  private IVertex<V, E, LongWritable, LongWritable> createVertex(LongWritable vertexID) {
-    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class},
-            new Object[] {vertexID});
+  private IVertex<V, E, LongWritable, LongWritable> createVertexInstance(LongWritable vertexID, List<IEdge<E, LongWritable, LongWritable>> adjList) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class, Iterable.class},
+            new Object[] {vertexID, adjList});
   }
 
   /*

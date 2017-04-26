@@ -287,13 +287,11 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
         Long.valueOf(JSONInput.get(0).toString()));
     assert (vertexMap.get(sourceID) == null);
 
-    IVertex<V, E, LongWritable, LongWritable> vertex = ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS,
-            new Class<?>[] {Writable.class}, new Object[] {sourceID});
+    List<IEdge<E, LongWritable, LongWritable>> _adjList = new ArrayList<IEdge<E, LongWritable, LongWritable>>();
 
     //fix this
     V value = (V) new Text(JSONInput.get(2).toString());
-    
-    vertex.setValue(value);
+
 
     JSONArray edgeList = (JSONArray) JSONInput.get(3);
     for (Object edgeInfo : edgeList) {
@@ -308,8 +306,11 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
       Edge<E, LongWritable, LongWritable> edge = new Edge<E, LongWritable, LongWritable>(
           edgeID, sinkID);
       edge.setValue(edgeValue);
-      vertex.addEdge(edge);
+      _adjList.add(edge);
     }
+
+    IVertex<V, E, LongWritable, LongWritable> vertex = createVertexInstance(sourceID, _adjList);
+    vertex.setValue(value);
     return vertex;
   }
   
@@ -373,5 +374,10 @@ public class LongTextJSONReader<S extends Writable, V extends Writable, E extend
      
     }
     sendToAllPartitions(subgraphLocationBroadcast);
+  }
+
+  private IVertex<V, E, LongWritable, LongWritable> createVertexInstance(LongWritable vertexID, List<IEdge<E, LongWritable, LongWritable>> adjList) {
+    return ReflectionUtils.newInstance(GraphJobRunner.VERTEX_CLASS, new Class<?>[] {Writable.class, Iterable.class},
+            new Object[] {vertexID, adjList});
   }
 }

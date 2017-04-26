@@ -45,11 +45,6 @@ public class VertexWithAdjacentSet<V extends Writable, E extends Writable, I ext
       _adjSet.put(e.getSinkVertexId(), e);
   }
 
-  @Override
-  public void addEdge(IEdge<E, I, J> edge) {
-    _adjSet.put(edge.getSinkVertexId(), edge);
-  }
-
   void setVertexID(I vertexID) {
     this.vertexID = vertexID;
   }

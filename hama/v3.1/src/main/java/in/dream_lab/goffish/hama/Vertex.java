@@ -49,11 +49,6 @@ public class Vertex<V extends Writable, E extends Writable, I extends Writable, 
       _adjList.add(e);
   }
 
-  @Override
-  public void addEdge(IEdge<E, I, J> edge) {
-    _adjList.add(edge);
-  }
-
   void setVertexID(I vertexID) {
     this.vertexID = vertexID;
   }
