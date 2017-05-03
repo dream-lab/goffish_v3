@@ -53,6 +53,7 @@ import in.dream_lab.goffish.api.IMessage;
 import in.dream_lab.goffish.api.IRemoteVertex;
 import in.dream_lab.goffish.api.ISubgraph;
 import in.dream_lab.goffish.api.ISubgraphCompute;
+import in.dream_lab.goffish.api.ISubgraphWrapup;
 import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.GraphJob;
 import in.dream_lab.goffish.hama.Vertex;
@@ -247,7 +248,12 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
       throws IOException {
 
-    for (ISubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
+    for (SubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
+      AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphCompute = subgraph
+          .getAbstractSubgraphCompute();
+      if (abstractSubgraphCompute instanceof ISubgraphWrapup) {
+        ((ISubgraphWrapup) abstractSubgraphCompute).wrapup();
+      }
       System.out.println("Subgraph " + subgraph.getSubgraph().getSubgraphId()
           + " value: " + subgraph.getSubgraph().getSubgraphValue());
     }

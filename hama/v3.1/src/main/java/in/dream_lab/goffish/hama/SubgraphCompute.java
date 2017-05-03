@@ -117,6 +117,10 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
       AbstractSubgraphComputation<S, V, E, M, I, J, K> comp) {
     this.abstractSubgraphCompute = comp;
   }
+  
+  public AbstractSubgraphComputation<S, V, E, M, I, J, K> getAbstractSubgraphCompute() {
+    return this.abstractSubgraphCompute;
+  }
 
   public void compute(Iterable<IMessage<K, M>> messages) throws IOException {
     abstractSubgraphCompute.compute(messages);
