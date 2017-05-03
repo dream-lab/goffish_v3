@@ -222,18 +222,16 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         if (!subgraph.hasVotedToHalt() || hasMessages) {
           executor.execute(new ComputeRunnable(subgraph, messagesToSubgraph));
           subgraphsExecutedThisSuperstep++;
-          if (!subgraph.hasVotedToHalt())
-            allVotedToHalt = false;
         }
       }
-      
+
       while (executor.getCompletedTaskCount() < subgraphsExecutedThisSuperstep) {
         Thread.sleep(100);
       }
-      
+
       executor.shutdown();
       executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-      
+
       sendHeartBeat();
 
       peer.getCounter(GraphJobCounter.ITERATIONS).increment(1);
@@ -281,6 +279,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
          */
         subgraphComputeRunner.setActive();
         subgraphComputeRunner.compute(msgs);
+
+        if (!subgraphComputeRunner.hasVotedToHalt())
+          allVotedToHalt = false;
+
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -370,7 +372,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
    * destination e.g. subgraph, vertex etc. Also updates the messageInFlight
    * boolean.
    */
-  void sendMessage(String peerName, Message<K, M> message) {
+  private void sendMessage(String peerName, Message<K, M> message) {
     try {
       peer.send(peerName, message);
       if (message.getControlInfo()
@@ -384,13 +386,13 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   /* Sends message to all the peers. */
-  void sendToAll(Message<K, M> message) {
+  private void sendToAll(Message<K, M> message) {
     for (String peerName : peer.getAllPeerNames()) {
       sendMessage(peerName, message);
     }
   }
 
-  void sendMessage(K subgraphID, M message) {
+  synchronized void sendMessage(K subgraphID, M message) {
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         subgraphID, message);
     ControlMessage controlInfo = new ControlMessage();
@@ -399,11 +401,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     sendMessage(peer.getPeerName(subgraphPartitionMap.get(subgraphID)), msg);
   }
 
-  void sendToVertex(I vertexID, M message) {
+  synchronized void sendToVertex(I vertexID, M message) {
     // TODO
   }
 
-  void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
+  synchronized void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
     Set<K> sent = new HashSet<K>();
     for (IRemoteVertex<V, E, I, J, K> remotevertices : subgraph
         .getRemoteVertices()) {
@@ -415,7 +417,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     }
   }
 
-  void sendToAll(M message) {
+  synchronized void sendToAll(M message) {
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         message);
     ControlMessage controlInfo = new ControlMessage();
