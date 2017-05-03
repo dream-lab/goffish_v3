@@ -145,8 +145,6 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
   public Iterable<IEdge<E, I, J>> getOutEdges() {
     List<IEdge<E, I, J>> edgeList = new ArrayList<IEdge<E, I, J>>();
     for (IVertex<V, E, I, J> vertex : _localVertexMap.values()) {
-      if (vertex.isRemote())
-        continue;
       for (IEdge<E, I, J> vertexEdge : vertex.getOutEdges()) {
         edgeList.add(vertexEdge);
       }
