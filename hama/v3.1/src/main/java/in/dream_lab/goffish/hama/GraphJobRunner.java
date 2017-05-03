@@ -17,17 +17,13 @@
  */
 package in.dream_lab.goffish.hama;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -36,44 +32,26 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Iterables;
+import in.dream_lab.goffish.api.*;
 import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hdfs.net.Peer;
-import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
-import org.apache.hama.Constants;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSP;
 import org.apache.hama.bsp.BSPPeer;
 import org.apache.hama.bsp.Combiner;
-import org.apache.hama.bsp.HashPartitioner;
 import org.apache.hama.bsp.Partitioner;
 import org.apache.hama.bsp.PartitioningRunner;
 import org.apache.hama.bsp.sync.SyncException;
-import org.apache.hama.commons.util.KeyValuePair;
 import org.apache.hama.util.ReflectionUtils;
-import org.apache.hama.util.UnsafeByteArrayInputStream;
-import org.apache.hama.util.WritableUtils;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
 
-import in.dream_lab.goffish.api.AbstractSubgraphComputation;
-import in.dream_lab.goffish.api.IEdge;
-import in.dream_lab.goffish.api.IMessage;
-import in.dream_lab.goffish.api.IRemoteVertex;
-import in.dream_lab.goffish.api.ISubgraph;
-import in.dream_lab.goffish.api.ISubgraphCompute;
-import in.dream_lab.goffish.api.IVertex;
+import in.dream_lab.goffish.api.ISubgraphWrapup;
 import in.dream_lab.goffish.hama.GraphJob;
 import in.dream_lab.goffish.hama.Vertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
@@ -120,7 +98,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   // Track memory usage
   Runtime runtime = Runtime.getRuntime();
   long mb = 1024 * 1024;
-  
+
+  private RejectedExecutionHandler retryHandler = new RetryRejectedExecutionHandler();
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
   public final void setup(
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
@@ -128,8 +109,6 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
 
     setupfields(peer);
     
-    /*TODO: Read input reader class type from Hama conf. */
-
     Class<? extends IReader> readerClass = conf.getClass(GraphJob.READER_CLASS_ATTR, LongTextAdjacencyListReader.class, IReader.class);
     List<Object> params = new ArrayList<Object>();
     params.add(peer);
@@ -201,7 +180,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
   
   /*Initialize the  fields*/
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private void setupfields(
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer) {
     
@@ -288,6 +267,13 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       } else if (globalVoteToHalt) {
         break;
       }
+      
+      ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
+          .newCachedThreadPool();
+      executor.setMaximumPoolSize(Runtime.getRuntime().availableProcessors()*2);
+      executor.setRejectedExecutionHandler(retryHandler);
+      
+      long subgraphsExecutedThisSuperstep = 0;
 
       for (SubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
         boolean hasMessages = false;
@@ -303,14 +289,8 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
                 + "," + sgMsgRecv + "," + broadcastMsgRecv + "," + (sgMsgRecv + broadcastMsgRecv));
 
         if (!subgraph.hasVotedToHalt() || hasMessages) {
-          subgraph.setActive();
-          long startTime = System.currentTimeMillis();
-          subgraph.compute(messagesToSubgraph);
-          long endTime = System.currentTimeMillis();
-          LOG.info("PERF.SG.COMPUTE_TIME," + subgraph.getSubgraph().getSubgraphId() + ","
-                  + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
-          if (!subgraph.hasVotedToHalt())
-            allVotedToHalt = false;
+          executor.execute(new ComputeRunnable(subgraph, messagesToSubgraph));
+          subgraphsExecutedThisSuperstep++;
         }
         else {
           long curTime = System.currentTimeMillis();
@@ -321,6 +301,14 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         LOG.info("PERF.SG.SEND_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
                  + "," + sgMsgSend + "," + broadcastMsgSend + "," + (sgMsgSend + broadcastMsgSend));
       }
+
+      while (executor.getCompletedTaskCount() < subgraphsExecutedThisSuperstep) {
+        Thread.sleep(100);
+      }
+
+      executor.shutdown();
+      executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+
       sendHeartBeat();
 
       peer.getCounter(GraphJobCounter.ITERATIONS).increment(1);
@@ -335,9 +323,49 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       BSPPeer<Writable, Writable, Writable, Writable, Message<K, M>> peer)
       throws IOException {
 
-    for (ISubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
+    for (SubgraphCompute<S, V, E, M, I, J, K> subgraph : subgraphs) {
+      AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphCompute = subgraph
+          .getAbstractSubgraphCompute();
+      if (abstractSubgraphCompute instanceof ISubgraphWrapup) {
+        ((ISubgraphWrapup) abstractSubgraphCompute).wrapup();
+      }
       System.out.println("Subgraph " + subgraph.getSubgraph().getSubgraphId()
           + " value: " + subgraph.getSubgraph().getSubgraphValue());
+    }
+  }
+  
+  
+  class ComputeRunnable implements Runnable {
+    SubgraphCompute<S, V, E, M, I, J, K> subgraphComputeRunner;
+    Iterable<IMessage<K, M>> msgs;
+
+    @SuppressWarnings("unchecked")
+    public ComputeRunnable(SubgraphCompute<S, V, E, M, I, J, K> runner, List<IMessage<K, M>> messages) throws IOException {
+      this.subgraphComputeRunner = runner;
+      this.msgs = messages;
+    }
+
+    @Override
+    public void run() {
+      try {
+        // call once at initial superstep
+        /*
+        if (getSuperStepCount() == 0) { subgraphComputeRunner.setup(conf);
+        msgs = Collections.singleton(subgraphComputeRunner.getSubgraph().
+        getSubgraphValue()); }
+         */
+        subgraphComputeRunner.setActive();
+        long startTime = System.currentTimeMillis();
+        subgraphComputeRunner.compute(msgs);
+        long endTime = System.currentTimeMillis();
+        LOG.info("PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
+                + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
+        if (!subgraphComputeRunner.hasVotedToHalt())
+          allVotedToHalt = false;
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -425,7 +453,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
    * destination e.g. subgraph, vertex etc. Also updates the messageInFlight
    * boolean.
    */
-  void sendMessage(String peerName, Message<K, M> message) {
+  private void sendMessage(String peerName, Message<K, M> message) {
     try {
       peer.send(peerName, message);
       if (message.getControlInfo()
@@ -439,13 +467,13 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   /* Sends message to all the peers. */
-  void sendToAll(Message<K, M> message) {
+  private void sendToAll(Message<K, M> message) {
     for (String peerName : peer.getAllPeerNames()) {
       sendMessage(peerName, message);
     }
   }
 
-  void sendMessage(K subgraphID, M message) {
+  synchronized void sendMessage(K subgraphID, M message) {
     sgMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         subgraphID, message);
@@ -455,11 +483,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     sendMessage(peer.getPeerName(subgraphPartitionMap.get(subgraphID)), msg);
   }
 
-  void sendToVertex(I vertexID, M message) {
+  synchronized void sendToVertex(I vertexID, M message) {
     // TODO
   }
 
-  void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
+  synchronized void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
     Set<K> sent = new HashSet<K>();
     for (IRemoteVertex<V, E, I, J, K> remotevertices : subgraph
         .getRemoteVertices()) {
@@ -471,7 +499,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     }
   }
 
-  void sendToAll(M message) {
+  synchronized void sendToAll(M message) {
     broadcastMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         message);
@@ -501,5 +529,20 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         .setTransmissionType(IControlMessage.TransmissionType.GLOBAL_HALT);
     msg.setControlInfo(controlInfo);
     sendToAll(msg);
+  }
+  
+  
+  class RetryRejectedExecutionHandler implements RejectedExecutionHandler {
+
+    @Override
+    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+      try {
+        Thread.sleep(10);
+      } catch (InterruptedException e) {
+        LOG.error(e);
+      }
+      executor.execute(r);
+    }
+
   }
 }

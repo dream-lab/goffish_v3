@@ -41,6 +41,7 @@ import com.google.common.collect.Iterables;
 import in.dream_lab.goffish.api.IEdge;
 import in.dream_lab.goffish.api.IMessage;
 import in.dream_lab.goffish.api.IRemoteVertex;
+import in.dream_lab.goffish.api.ISubgraphWrapup;
 import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.api.AbstractSubgraphComputation;
 
@@ -62,7 +63,8 @@ import in.dream_lab.goffish.api.AbstractSubgraphComputation;
  *
  */
 public class SingleSourceShortestPath extends
-    AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, Text, LongWritable, LongWritable, LongWritable> {
+		AbstractSubgraphComputation<LongWritable, LongWritable, LongWritable, Text, LongWritable, LongWritable, LongWritable>
+		implements ISubgraphWrapup {
 
   // Input Variables
   private long sourceVertexID;
@@ -324,6 +326,7 @@ public class SingleSourceShortestPath extends
 
   }
 
+  @Override
   public void wrapup() {
 
     ///////////////////////////////////////////////
