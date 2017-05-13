@@ -32,6 +32,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.collect.Iterables;
+import in.dream_lab.goffish.api.*;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
@@ -48,23 +51,21 @@ import org.apache.hama.util.ReflectionUtils;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 
-import in.dream_lab.goffish.api.AbstractSubgraphComputation;
-import in.dream_lab.goffish.api.IMessage;
-import in.dream_lab.goffish.api.IRemoteVertex;
-import in.dream_lab.goffish.api.ISubgraph;
-import in.dream_lab.goffish.api.ISubgraphCompute;
 import in.dream_lab.goffish.api.ISubgraphWrapup;
-import in.dream_lab.goffish.api.IVertex;
 import in.dream_lab.goffish.hama.GraphJob;
 import in.dream_lab.goffish.hama.Vertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 /**
  * Fully generic graph job runner.
- * 
- * @param <V> the id type of a vertex.
- * @param <E> the value type of an edge.
- * @param <M> the value type of a vertex.
+ *
+ * @param <S> Subgraph value object type
+ * @param <V> Vertex value object type
+ * @param <E> Edge value object type
+ * @param <M> Message object type
+ * @param <I> Vertex ID type
+ * @param <J> Edge ID type
+ * @param <K> Subgraph ID type
  */
 
 public final class GraphJobRunner<S extends Writable, V extends Writable, E extends Writable, M extends Writable, I extends Writable, J extends Writable, K extends Writable>
@@ -91,6 +92,13 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   private List<SubgraphCompute<S, V, E, M, I, J, K>> subgraphs=new ArrayList<SubgraphCompute<S, V, E, M, I, J, K>>();
   boolean allVotedToHalt = false, messageInFlight = false, globalVoteToHalt = false;
 
+  // Stats for logging application level messages
+  long sgMsgRecv, broadcastMsgRecv, sgMsgSend, broadcastMsgSend;
+
+  // Track memory usage
+  Runtime runtime = Runtime.getRuntime();
+  long mb = 1024 * 1024;
+
   private RejectedExecutionHandler retryHandler = new RetryRejectedExecutionHandler();
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -110,9 +118,64 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     IReader<Writable, Writable, Writable, Writable, S, V, E, I, J, K> reader = ReflectionUtils
         .newInstance(readerClass, paramClasses, params.toArray());
 
-    for (ISubgraph<S, V, E, I, J, K> subgraph : reader.getSubgraphs()) {
+    long startTime = System.currentTimeMillis();
+    List<ISubgraph<S, V, E, I, J, K>> subgraphs = reader.getSubgraphs();
+    long endTime = System.currentTimeMillis();
+    LOG.info("PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + startTime + "," +
+             endTime + "," + (endTime - startTime));
+    LOG.info("WORKER.INFO," + peer.getPeerIndex() + "," + peer.getPeerName() + ","
+             + peer.getNumPeers() + "," + (Runtime.getRuntime().availableProcessors() * 2));
+
+    for (ISubgraph<S, V, E, I, J, K> subgraph : subgraphs) {
       partition.addSubgraph(subgraph);
+
+      // Logging info about subgraph
+      if (LOG.isInfoEnabled()) {
+        long localEdgeCount = 0, remoteEdgeCount = 0, boundaryVertexCount = 0, maxEdgeDegree = 0;
+        K sgid = subgraph.getSubgraphId();
+        long localVertexCount = subgraph.getLocalVertexCount();
+        long remoteVertexCount = Iterables.size(subgraph.getRemoteVertices());
+        Map<K, Long> neighborSgId = new HashMap<K, Long>();
+
+        for (IVertex<V, E, I, J> v : subgraph.getLocalVertices()) {
+          boolean isBoundary = false;
+          long edgeDegree = 0;
+          for (IEdge<E, I, J> e : v.getOutEdges()) {
+            edgeDegree++;
+            IVertex<V, E, I, J> adjVertex = subgraph.getVertexById(e.getSinkVertexId());
+            if (adjVertex.isRemote()) {
+              isBoundary = true;
+              remoteEdgeCount++;
+              K adjSgid = ((IRemoteVertex<V, E, I, J, K>)adjVertex).getSubgraphId();
+              Long remoteEdgesSg = neighborSgId.get(adjSgid);
+              if (remoteEdgesSg == null)
+                remoteEdgesSg = new Long(0);
+              neighborSgId.put(adjSgid, remoteEdgesSg + 1);
+            } else
+              localEdgeCount++;
+          }
+          if (isBoundary)
+            boundaryVertexCount++;
+          if (edgeDegree > maxEdgeDegree)
+            maxEdgeDegree = edgeDegree;
+        }
+
+        LOG.info("TOPO.SG," + sgid + "," + localVertexCount + "," + localEdgeCount + ","
+                 + remoteVertexCount + "," + remoteEdgeCount + "," + boundaryVertexCount
+                 + "," + maxEdgeDegree);
+
+        String adjSgidString = new String(), prefix = "";
+        for (Map.Entry<K, Long> e : neighborSgId.entrySet()) {
+          adjSgidString += prefix + e.getKey() + "," + e.getValue();
+          prefix = ",";
+        }
+        if (adjSgidString.isEmpty())
+          LOG.info("META.SG," + sgid + "," + localVertexCount);
+        else
+          LOG.info("META.SG," + sgid + "," + localVertexCount + "," + adjSgidString);
+      }
     }
+
 
   }
   
@@ -149,7 +212,6 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
      * Creating SubgraphCompute objects
      */
     for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
-      
       if (initialValue != null) {
         Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>> subgraphComputeClass = null;
         subgraphComputeClass = (Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>>) conf
@@ -183,14 +245,18 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     //Completed all initialization steps at this point
     peer.sync();
     
-    while (!globalVoteToHalt) {     
-      
-      LOG.info("Application SuperStep "+getSuperStepCount());
+    while (!globalVoteToHalt) {
+
+      LOG.info("Application SuperStep " + getSuperStepCount());
+      LOG.info("PERF.SS_MEM," + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
+               + (runtime.freeMemory() / mb) + "," +  (runtime.totalMemory() / mb) + ","
+               + (runtime.maxMemory() / mb));
       
       subgraphMessageMap = new HashMap<K, List<IMessage<K, M>>>();
       globalVoteToHalt = (isMasterTask(peer) && getSuperStepCount() != 0) ? true : false;
       allVotedToHalt = true;
       messageInFlight = false;
+      sgMsgRecv = broadcastMsgRecv = sgMsgSend = broadcastMsgSend = 0;
       parseMessages();
 
       if (globalVoteToHalt && isMasterTask(peer)) {
@@ -219,10 +285,21 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           messagesToSubgraph = Lists.newArrayList();
         }
 
+        LOG.info("PERF.SG.RECV_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+                + "," + sgMsgRecv + "," + broadcastMsgRecv + "," + (sgMsgRecv + broadcastMsgRecv));
+
         if (!subgraph.hasVotedToHalt() || hasMessages) {
           executor.execute(new ComputeRunnable(subgraph, messagesToSubgraph));
           subgraphsExecutedThisSuperstep++;
         }
+        else {
+          long curTime = System.currentTimeMillis();
+          LOG.info("PERF.SG.COMPUTE_TIME," + subgraph.getSubgraph().getSubgraphId() + ","
+                  + getSuperStepCount() + "," + curTime + "," + curTime + "," + 0);
+        }
+
+        LOG.info("PERF.SG.SEND_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+                 + "," + sgMsgSend + "," + broadcastMsgSend + "," + (sgMsgSend + broadcastMsgSend));
       }
 
       while (executor.getCompletedTaskCount() < subgraphsExecutedThisSuperstep) {
@@ -278,8 +355,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         getSubgraphValue()); }
          */
         subgraphComputeRunner.setActive();
+        long startTime = System.currentTimeMillis();
         subgraphComputeRunner.compute(msgs);
-
+        long endTime = System.currentTimeMillis();
+        LOG.info("PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
+                + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
         if (!subgraphComputeRunner.hasVotedToHalt())
           allVotedToHalt = false;
 
@@ -307,11 +387,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   void parseMessages() throws IOException {
-
     Message<K, M> message;
     while ((message = peer.getCurrentMessage()) != null) {
       // Broadcast message, therefore every subgraph receives it
       if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.BROADCAST) {
+        broadcastMsgRecv++;
         for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
           List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(subgraph.getSubgraphId());
           if (subgraphMessage == null) {
@@ -322,6 +402,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         }
       }
       else if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.NORMAL) {
+        sgMsgRecv++;
         List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(message.getSubgraphId());
         if (subgraphMessage == null) {
           subgraphMessage = new ArrayList<IMessage<K, M>>();
@@ -393,6 +474,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   synchronized void sendMessage(K subgraphID, M message) {
+    sgMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         subgraphID, message);
     ControlMessage controlInfo = new ControlMessage();
@@ -418,6 +500,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   synchronized void sendToAll(M message) {
+    broadcastMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         message);
     ControlMessage controlInfo = new ControlMessage();

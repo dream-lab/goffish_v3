@@ -20,6 +20,8 @@ package in.dream_lab.goffish.hama;
 import java.io.IOException;
 
 import in.dream_lab.goffish.api.IVertex;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Writable;
@@ -54,9 +56,9 @@ public class GraphJob extends BSPJob {
   public final static String SUBGRAPH_VALUE_CLASS_ATTR = "in.dream_lab.goffish.subgraphvalue.class";
   public final static String READER_CLASS_ATTR = "in.dream_lab.goffish.reader.class";
   public final static String VERTEX_CLASS_ATTR = "in.dream_lab.goffish.vertex.class";
-
-
   public final static String INITIAL_VALUE = "in.dream_lab.goffish.initialvalue";
+
+  public static final Log LOG = LogFactory.getLog(GraphJob.class);
 
   public GraphJob(HamaConfiguration conf,
       Class<? extends AbstractSubgraphComputation> exampleClass) throws IOException {
@@ -195,6 +197,32 @@ public class GraphJob extends BSPJob {
   @Override
   public void submit() throws IOException, InterruptedException {
     super.submit();
+  }
+
+  @Override
+  public boolean waitForCompletion(boolean verbose) throws IOException,
+          InterruptedException, ClassNotFoundException {
+    if (LOG.isInfoEnabled()) {
+      String sgValueClass = conf.get(SUBGRAPH_VALUE_CLASS_ATTR);
+      String vertexValueClass = conf.get(VERTEX_VALUE_CLASS_ATTR);
+      String edgeValueClass = conf.get(EDGE_VALUE_CLASS_ATTR);
+      String messageClass = conf.get(GRAPH_MESSAGE_CLASS_ATTR);
+      String vertexIdClass = conf.get(VERTEX_ID_CLASS_ATTR);
+      String edgeIdClass = conf.get(EDGE_ID_CLASS_ATTR);
+      String sgIdClass = conf.get(SUBGRAPH_ID_CLASS_ATTR);
+      String sgComputeClass = conf.get(SUBGRAPH_COMPUTE_CLASS_ATTR);
+      String sgImplClass = conf.get(SUBGRAPH_CLASS_ATTR);
+      String vertexImplClass = conf.get(VERTEX_CLASS_ATTR);
+      String readerClass = conf.get(READER_CLASS_ATTR);
+      String initialValue = conf.get(INITIAL_VALUE);
+
+      LOG.info("TYPE.SG," + sgValueClass + "," + vertexValueClass + "," + edgeValueClass
+               + "," + messageClass + "," + vertexIdClass + "," + edgeIdClass + ","
+               + sgIdClass + "," + sgComputeClass + "," + sgImplClass + "," + vertexImplClass
+               + "," + readerClass + "," + initialValue);
+
+    }
+    return super.waitForCompletion(verbose);
   }
 
 }
