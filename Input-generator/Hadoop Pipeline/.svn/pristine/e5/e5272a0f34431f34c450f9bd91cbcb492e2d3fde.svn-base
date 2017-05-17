@@ -1,0 +1,258 @@
+package in.dream_lab.hadoopPipeline.cc;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.*;
+
+import it.unimi.dsi.fastutil.*;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.UUID;
+
+import edu.usc.goffish.gofs.slice.*;
+import edu.usc.goffish.gofs.slice.HDFSStorageManager;
+import edu.usc.goffish.gofs.*;
+import edu.usc.goffish.gofs.partition.*;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
+
+import edu.usc.goffish.gofs.slice.KryoSliceSerializer;
+/*
+ *Sample Input from Mapper
+ * 
+ * PID		SGID#VID#<0:LocalV#LocalE>+#<1:RemoteV#RemoteE,RemotePID,RemoteSGID>+
+ * 0		#1#8064#0:7461446:194117632,0:13870:194052096,#1:1156152:194379776:13:218103809,
+ * 
+ * 
+ */
+
+public class GeneratePartitionSliceReducer extends Reducer<IntWritable,Text,Text,Text> {
+	int partitionID;
+	
+	HashMap<Long, SubgraphTuple> Subgraphs = new HashMap<Long, SubgraphTuple>();
+	
+	@Override
+	protected void reduce(IntWritable Key, Iterable<Text> values,Context context)
+			throws IOException, InterruptedException {
+		
+		//System.out.println("TEST:  KEY: "+Key+ "  VALUE:"+values);
+		partitionID=Key.get();
+		//System.out.println("TESTKEY: " +partitionID);
+	
+		for(Text v: values){
+		
+			String[] valueString = v.toString().split("#",-1);
+			long sgid= Long.parseLong(valueString[0]);
+			long vid= Long.parseLong(valueString[1]);
+			//System.out.println("TEST: SGID:"+sgid + "  VID:"+vid);
+			Long2ObjectMap<RemoteVertexInfo> RemoteVertexList = new Long2ObjectOpenHashMap<RemoteVertexInfo>();
+			ArrayList<EdgeTuple> edgeList = new ArrayList<EdgeTuple>();
+
+
+			if(!Subgraphs.containsKey(sgid)){
+				if(!valueString[2].isEmpty()){
+					String[] locaEdges= valueString[2].split(",",-1);
+
+					for(String localEdge : locaEdges){
+						if(!localEdge.isEmpty()){
+				//			Note that LocalEdge is denoted in format 0:LocalV:LocalE
+				//			EdgeTuple requires input as Eid,ESink										
+							EdgeTuple e=new EdgeTuple(Long.parseLong(localEdge.split(":")[2]), Long.parseLong(localEdge.split(":")[1]));
+							edgeList.add(e);
+						}
+					}
+				}
+				if(!valueString[3].isEmpty()){
+					String[] remoteEdges= valueString[3].split(",",-1);
+					for(String remoteEdge : remoteEdges){
+						if(!remoteEdge.isEmpty()){
+					//		Note that RemoteEdge is denoted in format <1:RemoteV:RemoteE,RemotePID,RemoteSGID>
+							EdgeTuple e=new EdgeTuple(Long.parseLong(remoteEdge.split(":")[2]), Long.parseLong(remoteEdge.split(":")[1]));
+							edgeList.add(e);
+							RemoteVertexInfo r=new RemoteVertexInfo(Integer.parseInt(remoteEdge.split(":")[3]), Long.parseLong(remoteEdge.split(":")[4]));
+							RemoteVertexList.put(Long.parseLong(remoteEdge.split(":")[1]), r);
+						}
+					}
+				}
+				edgeList.trimToSize();
+				ArrayList<VertexTuple> AdjList = new ArrayList<VertexTuple>();
+				VertexTuple V = new VertexTuple(vid, edgeList);
+				AdjList.add(V);
+				SubgraphTuple sg = new SubgraphTuple(sgid, AdjList, RemoteVertexList);
+				Subgraphs.put(sgid, sg);
+			}else{
+				SubgraphTuple sg = Subgraphs.get(sgid);
+				if(!valueString[2].isEmpty()){
+					String[] locaEdges= valueString[2].split(",",-1);
+
+					for(String localEdge : locaEdges){
+						if(!localEdge.isEmpty()){
+						//	System.out.println("TEST: localEdge : "+localEdge);
+							EdgeTuple e = new EdgeTuple(Long.parseLong(localEdge.split(":")[2]), Long.parseLong(localEdge.split(":")[1]));
+							edgeList.add(e);
+						}
+					}
+				}	
+				if(!valueString[3].isEmpty()){
+					String[] remoteEdges= valueString[3].split(",",-1);
+					for(String remoteEdge : remoteEdges){
+						if(!remoteEdge.isEmpty()){
+							//System.out.println("TEST: remoteEdge : " + remoteEdge);
+							EdgeTuple e = new EdgeTuple(Long.parseLong(remoteEdge.split(":")[2]), Long.parseLong(remoteEdge.split(":")[1]));
+							edgeList.add(e);
+							RemoteVertexInfo r = new RemoteVertexInfo(Integer.parseInt(remoteEdge.split(":")[3]), Long.parseLong(remoteEdge.split(":")[4]));
+							sg.RemoteVertices.put(Long.parseLong(remoteEdge.split(":")[1]), r);
+						}
+					}
+				}	
+				edgeList.trimToSize();
+				VertexTuple V = new VertexTuple(vid, edgeList);
+				sg.AdjacencyList.add(V);
+			}
+		}
+
+		KryoSliceSerializer _serializer = new KryoSliceSerializer();
+        
+		Configuration conf1 = context.getConfiguration();
+    	String graphID1 = conf1.get("GraphID");
+          
+    	Configuration conf= new Configuration();
+    	FileSystem dfs = FileSystem.get(conf);
+    	
+    	String dirName = graphID1+ "Partition"+partitionID;
+    	
+    	Path src = new Path(dfs.getWorkingDirectory()+"/"+dirName);
+    	
+    	//dfs.mkdirs(src); 
+    	
+    	HDFSStorageManager hdfsStorageManager= new HDFSStorageManager(src);
+        ISliceManager sliceManager1 = SliceManager.create(_serializer, hdfsStorageManager );
+        
+        //long total;
+        
+        ArrayList<ISubgraph> subgraphs = new ArrayList<ISubgraph>(Subgraphs.keySet().size());
+        for (SubgraphTuple subgraph : Subgraphs.values()) {
+            //SubgraphTuple subgraph = S
+
+            // recreate template
+            TemplateGraph template = new TemplateGraph(true, subgraph.AdjacencyList.size());
+            for (int j = 0; j < subgraph.AdjacencyList.size(); j++) {
+                VertexTuple vertex = subgraph.AdjacencyList.get(j);
+//                System.out.println("IN loop vid"+vertex.VertexId);
+                // retrieve source
+                TemplateVertex source = template.getVertex(vertex.VertexId);
+                if (source == null) {
+                    RemoteVertexInfo rvi = subgraph.RemoteVertices.get(vertex.VertexId);
+                    if (rvi != null) {
+  //                      System.out.println("Remote vertex "+vertex.VertexId);
+                        source = new TemplateRemoteVertex(vertex.VertexId, rvi.RemotePartition, rvi.RemoteSubgraph);
+                    } else {
+                        source = new TemplateVertex(vertex.VertexId);
+                    }
+                    template.addVertex(source);
+                }
+
+                for (int k = 0; k < vertex.Edges.size(); k++) {
+                    EdgeTuple edge = vertex.Edges.get(k);
+
+                    // retrieve sink
+                    TemplateVertex sink = template.getVertex(edge.EdgeSink);
+                    if (sink == null) {
+                        RemoteVertexInfo rvi = subgraph.RemoteVertices.get(edge.EdgeSink);
+                        if (rvi != null) {
+                            sink = new TemplateRemoteVertex(edge.EdgeSink, rvi.RemotePartition, rvi.RemoteSubgraph);
+                        } else {
+                            sink = new TemplateVertex(edge.EdgeSink);
+                        }
+                        template.addVertex(sink);
+                    }
+
+                    template.connectEdge(new TemplateEdge(edge.EdgeId, source, sink));
+                }
+            }
+            PropertySet EmptyPropertySet = new PropertySet(Collections.<Property>emptyList());
+           subgraphs.add(new TemplateSubgraph(subgraph.SubgraphId, template, EmptyPropertySet, EmptyPropertySet));
+           //System.out.println(template.toString()+ " "+ template.edges()+"  "+template.numVertices()+" "+template.numEdges()+ " "+template.vertices());
+
+       }
+       PropertySet EmptyPropertySet = new PropertySet(Collections.<Property>emptyList());
+       IPartition partition=new Partition(partitionID, true, subgraphs,EmptyPropertySet , EmptyPropertySet);
+
+       //TODO:add a new method in sliceManager to write the template to HDFS
+       sliceManager1.writePartitionTemplate(partition);
+    //   System.out.println("total  "+total );
+
+
+   }
+
+           
+	
+
+	public static final class SubgraphTuple implements Serializable {
+
+		private static final long serialVersionUID = -144175409675902319L;
+
+		public final long SubgraphId;
+		//@NotNull
+		public final ArrayList<VertexTuple> AdjacencyList;
+		//@NotNull
+		public final Long2ObjectMap<RemoteVertexInfo> RemoteVertices;
+
+		protected SubgraphTuple(long subgraphId, ArrayList<VertexTuple> adjacencyList, Long2ObjectMap<RemoteVertexInfo> remoteVertices) {
+			SubgraphId = subgraphId;
+			AdjacencyList = adjacencyList;
+			RemoteVertices = remoteVertices;
+		}
+	}
+
+	public static final class RemoteVertexInfo implements Serializable {
+
+		private static final long serialVersionUID = -3814205020357442820L;
+
+		public final int RemotePartition;
+		public final long RemoteSubgraph;
+
+		protected RemoteVertexInfo(int remotePartition, long remoteSubgraph) {
+			RemotePartition = remotePartition;
+			RemoteSubgraph = remoteSubgraph;
+		}
+	}
+
+	public static final class VertexTuple implements Serializable {
+
+		private static final long serialVersionUID = 286996756646877514L;
+
+		public final long VertexId;
+		//@NotNull
+		public final ArrayList<EdgeTuple> Edges;
+
+		protected VertexTuple(long vertexId, ArrayList<EdgeTuple> edges) {
+			VertexId = vertexId;
+			Edges = edges;
+		}
+	}
+
+	public static final class EdgeTuple implements Serializable {
+
+		private static final long serialVersionUID = 270607272373432013L;
+
+		public final long EdgeId;
+		public final long EdgeSink;
+
+		protected EdgeTuple(long edgeId, long edgeSink) {
+			EdgeId = edgeId;
+			EdgeSink = edgeSink;
+		}
+	}
+}

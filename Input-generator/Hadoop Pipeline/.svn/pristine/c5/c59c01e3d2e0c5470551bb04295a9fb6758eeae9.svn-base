@@ -1,0 +1,40 @@
+package in.dream_lab.hadoopPipeline.cc;
+
+import java.io.IOException;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+/*JOB ID 6
+ * 
+ * SAMPLE INPUT
+ * 
+ * PID#SGID		VID#<0:LocalV#LocalE>+#<1:RemoteV#RemoteE,RemotePID,RemoteSGID>+
+ * 0#1     		8064#0:7461446:194117632,0:13870:194052096,#1:1156152:194379776:13:218103809,
+ * 
+ * In the value part : 0-indicates local edge
+ * 					 : 1-indicates remote edge	
+ * 
+ * OUTPUT :
+ * 
+ * 
+ * 
+ */
+public class GeneratePartitionSliceMapper extends Mapper<Object,Text,IntWritable,Text> {
+
+	@Override
+	protected void map(Object key, Text value,Context context)
+			throws IOException, InterruptedException {
+		// TODO Parse the input data in the form Pid#SGid Vid#SinkID:EdgeID#RemoteVid:RemoteEdgeID:RemotePiD:RemoteSubgraphID
+		String[] inputLine = value.toString().split("\\s+");
+		String PidSGid = inputLine[0];
+		String VidAdjList = inputLine[1];
+		int Pid = Integer.parseInt(PidSGid.split("#")[0]);
+		long SGid =Long.parseLong(PidSGid.split("#")[1]);
+		//System.out.println("MAPPER "+Pid + "  "  +SGid+"#"+VidAdjList);
+		context.write(new IntWritable(Pid), new Text( new String(SGid + "#")+VidAdjList));
+		
+	}
+
+}

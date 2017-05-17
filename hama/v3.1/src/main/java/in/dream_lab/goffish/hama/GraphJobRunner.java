@@ -86,6 +86,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   private static Class<?> SUBGRAPH_CLASS;
   public static Class<? extends Writable> GRAPH_MESSAGE_CLASS;
   public static Class<? extends IVertex> VERTEX_CLASS;
+  private static int THREAD_COUNT;
   
   //public static Class<Subgraph<?, ?, ?, ?, ?, ?, ?>> subgraphClass;
   private Map<K, List<IMessage<K, M>>> subgraphMessageMap;
@@ -98,8 +99,6 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   // Track memory usage
   Runtime runtime = Runtime.getRuntime();
   long mb = 1024 * 1024;
-
-  private RejectedExecutionHandler retryHandler = new RetryRejectedExecutionHandler();
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   @Override
@@ -189,6 +188,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     this.conf = peer.getConfiguration();
     this.subgraphPartitionMap = new HashMap<K, Integer>();
     this.subgraphMessageMap = new HashMap<K, List<IMessage<K, M>>>();
+    this.THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
     // TODO : Add support for Richer Subgraph
     
     Class<M> graphMessageClass = (Class<M>) conf.getClass(
@@ -269,9 +269,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       }
       
       ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors
-          .newCachedThreadPool();
-      executor.setMaximumPoolSize(Runtime.getRuntime().availableProcessors()*2);
-      executor.setRejectedExecutionHandler(retryHandler);
+          .newFixedThreadPool(THREAD_COUNT);
+      //executor.setMaximumPoolSize(Runtime.getRuntime().availableProcessors()*2);
+      //executor.setRejectedExecutionHandler(retryHandler);
       
       long subgraphsExecutedThisSuperstep = 0;
 
@@ -302,12 +302,19 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
                  + "," + sgMsgSend + "," + broadcastMsgSend + "," + (sgMsgSend + broadcastMsgSend));
       }
 
-      while (executor.getCompletedTaskCount() < subgraphsExecutedThisSuperstep) {
-        Thread.sleep(100);
-      }
-
       executor.shutdown();
-      executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+
+      while (!executor.awaitTermination(5, TimeUnit.SECONDS))
+        System.out.println(
+            "Waiting. Submitted tasks: " + subgraphsExecutedThisSuperstep
+                + ". Completed threads: " + executor.getCompletedTaskCount());
+
+      if (executor.getCompletedTaskCount() != subgraphsExecutedThisSuperstep)
+        System.out.println("ERROR: expected " + subgraphsExecutedThisSuperstep
+            + " but found only completed threads "
+            + executor.getCompletedTaskCount());
+
+      // executor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 
       sendHeartBeat();
 
@@ -530,19 +537,5 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     msg.setControlInfo(controlInfo);
     sendToAll(msg);
   }
-  
-  
-  class RetryRejectedExecutionHandler implements RejectedExecutionHandler {
 
-    @Override
-    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-      try {
-        Thread.sleep(10);
-      } catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      executor.execute(r);
-    }
-
-  }
 }
