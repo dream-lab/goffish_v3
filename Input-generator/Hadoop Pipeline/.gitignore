@@ -1,0 +1,9 @@
+/target/
+*~
+*.swp
+/docs/
+.classpath
+.settings
+.project
+.svn
+.idea
