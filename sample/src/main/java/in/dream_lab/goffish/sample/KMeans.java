@@ -76,7 +76,8 @@ public class KMeans extends
 
     @Override
     public int compare(Pair<Double, Long> arg0, Pair<Double, Long> arg1) {
-      return arg0.first.compareTo(arg1.first);
+      return (arg0.first.compareTo(arg1.first) == 0) ? arg0.second.compareTo(arg1.second) :
+              arg0.first.compareTo(arg1.first);
     }
 
   }
