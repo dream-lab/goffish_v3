@@ -120,9 +120,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     long startTime = System.currentTimeMillis();
     List<ISubgraph<S, V, E, I, J, K>> subgraphs = reader.getSubgraphs();
     long endTime = System.currentTimeMillis();
-    LOG.info("PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + startTime + "," +
+    LOG.info("GOFFISH3.PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + startTime + "," +
              endTime + "," + (endTime - startTime));
-    LOG.info("WORKER.INFO," + peer.getPeerIndex() + "," + peer.getPeerName() + ","
+    LOG.info("GOFFISH3.WORKER.INFO," + peer.getPeerIndex() + "," + peer.getPeerName() + ","
              + peer.getNumPeers() + "," + (Runtime.getRuntime().availableProcessors() * 2));
 
     for (ISubgraph<S, V, E, I, J, K> subgraph : subgraphs) {
@@ -159,7 +159,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
             maxEdgeDegree = edgeDegree;
         }
 
-        LOG.info("TOPO.SG," + sgid + "," + localVertexCount + "," + localEdgeCount + ","
+        LOG.info("GOFFISH3.TOPO.SG," + sgid + "," + localVertexCount + "," + localEdgeCount + ","
                  + remoteVertexCount + "," + remoteEdgeCount + "," + boundaryVertexCount
                  + "," + maxEdgeDegree);
 
@@ -169,9 +169,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           prefix = ",";
         }
         if (adjSgidString.isEmpty())
-          LOG.info("META.SG," + sgid + "," + localVertexCount);
+          LOG.info("GOFFISH3.META.SG," + sgid + "," + localVertexCount);
         else
-          LOG.info("META.SG," + sgid + "," + localVertexCount + "," + adjSgidString);
+          LOG.info("GOFFISH3.META.SG," + sgid + "," + localVertexCount + "," + adjSgidString);
       }
     }
 
@@ -248,7 +248,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     while (!globalVoteToHalt) {
 
       LOG.info("Application SuperStep " + getSuperStepCount());
-      LOG.info("PERF.SS_MEM," + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
+      LOG.info("GOFFISH3.PERF.SS_MEM," + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
                + (runtime.freeMemory() / mb) + "," +  (runtime.totalMemory() / mb) + ","
                + (runtime.maxMemory() / mb));
       
@@ -285,7 +285,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           messagesToSubgraph = Lists.newArrayList();
         }
 
-        LOG.info("PERF.SG.RECV_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+        LOG.info("GOFFISH3.PERF.SG.RECV_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
                 + "," + sgMsgRecv + "," + broadcastMsgRecv + "," + (sgMsgRecv + broadcastMsgRecv));
 
         if (!subgraph.hasVotedToHalt() || hasMessages) {
@@ -294,23 +294,23 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         }
         else {
           long curTime = System.currentTimeMillis();
-          LOG.info("PERF.SG.COMPUTE_TIME," + subgraph.getSubgraph().getSubgraphId() + ","
+          LOG.info("GOFFISH3.PERF.SG.COMPUTE_TIME," + subgraph.getSubgraph().getSubgraphId() + ","
                   + getSuperStepCount() + "," + curTime + "," + curTime + "," + 0);
         }
 
-        LOG.info("PERF.SG.SEND_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+        LOG.info("GOFFISH3.PERF.SG.SEND_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
                  + "," + sgMsgSend + "," + broadcastMsgSend + "," + (sgMsgSend + broadcastMsgSend));
       }
 
       executor.shutdown();
 
       while (!executor.awaitTermination(5, TimeUnit.SECONDS))
-        System.out.println(
+        LOG.info(
             "Waiting. Submitted tasks: " + subgraphsExecutedThisSuperstep
                 + ". Completed threads: " + executor.getCompletedTaskCount());
 
       if (executor.getCompletedTaskCount() != subgraphsExecutedThisSuperstep)
-        System.out.println("ERROR: expected " + subgraphsExecutedThisSuperstep
+        LOG.info("ERROR: expected " + subgraphsExecutedThisSuperstep
             + " but found only completed threads "
             + executor.getCompletedTaskCount());
 
@@ -336,8 +336,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       if (abstractSubgraphCompute instanceof ISubgraphWrapup) {
         ((ISubgraphWrapup) abstractSubgraphCompute).wrapup();
       }
-      System.out.println("Subgraph " + subgraph.getSubgraph().getSubgraphId()
-          + " value: " + subgraph.getSubgraph().getSubgraphValue());
+      else if (subgraph.getSubgraph().getSubgraphValue() != null)
+        System.out.println("Subgraph " + subgraph.getSubgraph().getSubgraphId()
+            + " value: " + subgraph.getSubgraph().getSubgraphValue());
     }
   }
   
@@ -365,7 +366,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         long startTime = System.currentTimeMillis();
         subgraphComputeRunner.compute(msgs);
         long endTime = System.currentTimeMillis();
-        LOG.info("PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
+        LOG.info("GOFFISH3.PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
                 + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
         if (!subgraphComputeRunner.hasVotedToHalt())
           allVotedToHalt = false;
