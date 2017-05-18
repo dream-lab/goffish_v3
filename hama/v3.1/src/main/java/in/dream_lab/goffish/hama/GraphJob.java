@@ -216,7 +216,7 @@ public class GraphJob extends BSPJob {
       String readerClass = conf.get(READER_CLASS_ATTR);
       String initialValue = conf.get(INITIAL_VALUE);
 
-      LOG.info("TYPE.SG," + sgValueClass + "," + vertexValueClass + "," + edgeValueClass
+      LOG.info("GOFFISH3.TYPE.SG," + sgValueClass + "," + vertexValueClass + "," + edgeValueClass
                + "," + messageClass + "," + vertexIdClass + "," + edgeIdClass + ","
                + sgIdClass + "," + sgComputeClass + "," + sgImplClass + "," + vertexImplClass
                + "," + readerClass + "," + initialValue);

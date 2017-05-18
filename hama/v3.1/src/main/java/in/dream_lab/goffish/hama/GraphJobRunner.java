@@ -310,7 +310,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
                 + ". Completed threads: " + executor.getCompletedTaskCount());
 
       if (executor.getCompletedTaskCount() != subgraphsExecutedThisSuperstep)
-        LOG.info("ERROR: expected " + subgraphsExecutedThisSuperstep
+        LOG.error("ERROR: expected " + subgraphsExecutedThisSuperstep
             + " but found only completed threads "
             + executor.getCompletedTaskCount());
 
@@ -425,7 +425,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         assert (isMasterTask(peer));
         parseHeartBeat(message);
       } else {
-        System.out.println("Invalid transmission type!");
+        LOG.error("Invalid transmission type!");
       }
       /*
        * TODO: Add implementation for partition message and vertex message(used
