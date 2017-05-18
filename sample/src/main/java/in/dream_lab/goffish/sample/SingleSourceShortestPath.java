@@ -474,6 +474,8 @@ public class SingleSourceShortestPath extends
         // assume default edge weight is 1, unless a different value is given by
         // the instance
         int edgeWeight = 1;
+        if (e.getValue() != null)
+          edgeWeight = (int) e.getValue().get();
 
         // calculate potential new distance for child
         int newChildDistance = (distanceToCurrent + edgeWeight); // FIXME:
