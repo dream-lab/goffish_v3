@@ -104,6 +104,10 @@ public class DefaultJob {
     String vertexClass = prop.getProperty("vertexClass");
     if (vertexClass != null)
       job.setVertexClass((Class<? extends IVertex>) Class.forName(vertexClass));
+    
+    String threadCount = prop.getProperty("threadCount");
+    if (threadCount != null)
+      job.setThreadCount(Integer.parseInt(threadCount));
 
     String initialInput = prop.getProperty("initialInput");
     if (initialInput != null)

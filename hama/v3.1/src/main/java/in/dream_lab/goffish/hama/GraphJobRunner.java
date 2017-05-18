@@ -190,9 +190,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     this.conf = peer.getConfiguration();
     this.subgraphPartitionMap = new HashMap<K, Integer>();
     this.subgraphMessageMap = new HashMap<K, List<IMessage<K, M>>>();
-    this.THREAD_COUNT = 2 * Runtime.getRuntime().availableProcessors();
+    this.THREAD_COUNT = conf.getInt(GraphJob.THREAD_COUNT,
+        Runtime.getRuntime().availableProcessors());
     // TODO : Add support for Richer Subgraph
-    
+   
     Class<M> graphMessageClass = (Class<M>) conf.getClass(
         GraphJob.GRAPH_MESSAGE_CLASS_ATTR, IntWritable.class, Writable.class);
     GRAPH_MESSAGE_CLASS = graphMessageClass;

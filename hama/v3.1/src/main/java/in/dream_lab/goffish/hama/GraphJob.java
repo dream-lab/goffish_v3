@@ -59,6 +59,7 @@ public class GraphJob extends BSPJob {
   public final static String READER_CLASS_ATTR = "in.dream_lab.goffish.reader.class";
   public final static String VERTEX_CLASS_ATTR = "in.dream_lab.goffish.vertex.class";
   public final static String INITIAL_VALUE = "in.dream_lab.goffish.initialvalue";
+  public final static String THREAD_COUNT = "in.dream_lab.goffish.threadcount";
 
   public static final Log LOG = LogFactory.getLog(GraphJob.class);
 
@@ -184,6 +185,10 @@ public class GraphJob extends BSPJob {
    */
   public void setMaxIteration(int maxIteration) {
     conf.setInt("hama.graph.max.iteration", maxIteration);
+  }
+  
+  public void setThreadCount(int count) {
+    conf.setInt(THREAD_COUNT, count);
   }
 
   /**
