@@ -19,22 +19,18 @@ package in.dream_lab.goffish.hama;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.lang.management.ManagementFactory;
 
 import com.google.common.collect.Iterables;
 import in.dream_lab.goffish.api.*;
-import org.apache.commons.collections.map.HashedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
@@ -42,9 +38,6 @@ import org.apache.hadoop.io.Writable;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSP;
 import org.apache.hama.bsp.BSPPeer;
-import org.apache.hama.bsp.Combiner;
-import org.apache.hama.bsp.Partitioner;
-import org.apache.hama.bsp.PartitioningRunner;
 import org.apache.hama.bsp.sync.SyncException;
 import org.apache.hama.util.ReflectionUtils;
 
@@ -53,7 +46,6 @@ import com.google.common.primitives.Ints;
 
 import in.dream_lab.goffish.api.ISubgraphWrapup;
 import in.dream_lab.goffish.hama.GraphJob;
-import in.dream_lab.goffish.hama.Vertex;
 import in.dream_lab.goffish.hama.api.IControlMessage;
 import in.dream_lab.goffish.hama.api.IReader;
 /**
@@ -120,10 +112,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     long startTime = System.currentTimeMillis();
     List<ISubgraph<S, V, E, I, J, K>> subgraphs = reader.getSubgraphs();
     long endTime = System.currentTimeMillis();
-    LOG.info("GOFFISH3.PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + startTime + "," +
+    LOG.info("GOFFISH3.PERF.GRAPH_LOAD_TOTAL," + peer.getPeerIndex() + "," + startTime + "," +
              endTime + "," + (endTime - startTime));
     LOG.info("GOFFISH3.WORKER.INFO," + peer.getPeerIndex() + "," + peer.getPeerName() + ","
-             + peer.getNumPeers() + "," + (Runtime.getRuntime().availableProcessors() * 2));
+             + peer.getTaskId() + "," + peer.getNumPeers() + "," + THREAD_COUNT);
 
     for (ISubgraph<S, V, E, I, J, K> subgraph : subgraphs) {
       partition.addSubgraph(subgraph);
@@ -161,7 +153,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
 
         LOG.info("GOFFISH3.TOPO.SG," + sgid + "," + localVertexCount + "," + localEdgeCount + ","
                  + remoteVertexCount + "," + remoteEdgeCount + "," + boundaryVertexCount
-                 + "," + maxEdgeDegree);
+                 + "," + maxEdgeDegree + "," + peer.getPeerIndex());
 
         String adjSgidString = new String(), prefix = "";
         for (Map.Entry<K, Long> e : neighborSgId.entrySet()) {
@@ -172,6 +164,9 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           LOG.info("GOFFISH3.META.SG," + sgid + "," + localVertexCount);
         else
           LOG.info("GOFFISH3.META.SG," + sgid + "," + localVertexCount + "," + adjSgidString);
+
+        LOG.info("GOFFISH3.PERF.PART.PID," + peer.getPeerIndex() + "," +
+                 ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
       }
     }
 
@@ -248,7 +243,8 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     while (!globalVoteToHalt) {
 
       LOG.info("Application SuperStep " + getSuperStepCount());
-      LOG.info("GOFFISH3.PERF.SS_MEM," + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
+      LOG.info("GOFFISH3.PERF.PART.SS_START_MEM," + peer.getPeerIndex() + "," + getSuperStepCount() + ","
+               + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
                + (runtime.freeMemory() / mb) + "," +  (runtime.totalMemory() / mb) + ","
                + (runtime.maxMemory() / mb));
       
@@ -318,8 +314,12 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
 
       sendHeartBeat();
 
-      peer.getCounter(GraphJobCounter.ITERATIONS).increment(1);
+      LOG.info("GOFFISH3.PERF.PART.SS_END_MEM," + peer.getPeerIndex() + "," + getSuperStepCount() + ","
+              + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
+              + (runtime.freeMemory() / mb) + "," +  (runtime.totalMemory() / mb) + ","
+              + (runtime.maxMemory() / mb));
 
+      peer.getCounter(GraphJobCounter.ITERATIONS).increment(1);
       peer.sync();
 
     }

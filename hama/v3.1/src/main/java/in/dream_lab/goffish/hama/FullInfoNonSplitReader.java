@@ -68,6 +68,8 @@ public class FullInfoNonSplitReader<S extends Writable, V extends Writable, E ex
   public List<ISubgraph<S, V, E, LongWritable, LongWritable, LongWritable>> getSubgraphs()
       throws IOException, SyncException, InterruptedException {
 
+    long startTime = System.currentTimeMillis();
+
     KeyValuePair<Writable, Writable> pair;
     while ((pair = peer.readNext()) != null) {
       String stringInput = pair.getValue().toString();
@@ -94,9 +96,14 @@ public class FullInfoNonSplitReader<S extends Writable, V extends Writable, E ex
     sendToAllPartitions(subgraphMapppingMessage);
     
     LOG.debug("Subgraph partition Broadcast sent");
+    long endTime = System.currentTimeMillis();
+    LOG.info("GOFFISH3.PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + peer.getSuperstepCount() +
+            "," + startTime + "," + endTime + "," + (endTime - startTime));
 
     peer.sync();
-    
+
+    startTime = System.currentTimeMillis();
+
     Message<K, M> subgraphMappingInfoMessage;
     while ((subgraphMappingInfoMessage = peer.getCurrentMessage()) != null) {
       ControlMessage receivedCtrl = (ControlMessage) subgraphMappingInfoMessage
@@ -109,6 +116,9 @@ public class FullInfoNonSplitReader<S extends Writable, V extends Writable, E ex
       }
     }
     LOG.debug("Reader Completed");
+    endTime = System.currentTimeMillis();
+    LOG.info("GOFFISH3.PERF.GRAPH_LOAD," + peer.getPeerIndex() + "," + peer.getSuperstepCount() +
+            "," + startTime + "," + endTime + "," + (endTime - startTime));
 
     return partition.getSubgraphs();
   }
