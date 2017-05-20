@@ -1,20 +1,21 @@
 /**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+ *  Copyright 2017 DREAM:Lab, Indian Institute of Science, Bangalore
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+ *  not use this file except in compliance with the License. You may obtain
+ *  a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *  
+ *  @author Himanshu Sharma
+ *  @author Diptanshu Kakwani
+*/
 
 package in.dream_lab.goffish.job;
 
@@ -56,6 +57,7 @@ public class DefaultJob {
 
     String inputKeyClass = prop.getProperty("inputKeyClass");
     job.setInputKeyClass(Class.forName(inputKeyClass));
+    
     String inputValueClass = prop.getProperty("inputValueClass");
     job.setInputValueClass(Class.forName(inputValueClass));
 
@@ -84,10 +86,29 @@ public class DefaultJob {
     if (inputReaderClass != null)
       job.setInputReaderClass((Class<? extends IReader>)Class.forName(inputReaderClass));
 
+    String vertexIDClass = prop.getProperty("vertexIDClass");
+    if (vertexIDClass != null)
+      job.setVertexIDClass(
+          (Class<? extends Writable>) Class.forName(vertexIDClass));
+    
+    String edgeIDClass = prop.getProperty("edgeIDClass");
+    if (edgeIDClass != null)
+      job.setVertexIDClass(
+          (Class<? extends Writable>) Class.forName(edgeIDClass));
+    
+    String subgraphIDClass = prop.getProperty("subgraphIDClass");
+    if (subgraphIDClass != null)
+      job.setVertexIDClass(
+          (Class<? extends Writable>) Class.forName(subgraphIDClass));
+
     String vertexClass = prop.getProperty("vertexClass");
     if (vertexClass != null)
-      job.setVertexClass((Class<? extends IVertex>)Class.forName(vertexClass));
+      job.setVertexClass((Class<? extends IVertex>) Class.forName(vertexClass));
     
+    String threadCount = prop.getProperty("threadCount");
+    if (threadCount != null)
+      job.setThreadCount(Integer.parseInt(threadCount));
+
     String initialInput = prop.getProperty("initialInput");
     if (initialInput != null)
       job.setInitialInput(initialInput);
