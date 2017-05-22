@@ -98,8 +98,7 @@ public class DefaultJob {
     
     String subgraphIDClass = prop.getProperty("subgraphIDClass");
     if (subgraphIDClass != null)
-      job.setVertexIDClass(
-          (Class<? extends Writable>) Class.forName(subgraphIDClass));
+      job.setSubgraphIDClass((Class<? extends Writable>) Class.forName(subgraphIDClass));
 
     String vertexClass = prop.getProperty("vertexClass");
     if (vertexClass != null)

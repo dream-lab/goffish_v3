@@ -116,9 +116,7 @@ public class Message<K extends Writable, M extends Writable>
     messageType = WritableUtils.readEnum(in, MessageType.class);
     hasSubgraphID = in.readBoolean();
     if (hasSubgraphID) {
-      // TODO : Use reflection utils and instantiate
-      // this.subgraphID = ReflectionUtils.newInstance(K.class);
-      this.subgraphID = (K) new LongWritable();
+      this.subgraphID = (K) ReflectionUtils.newInstance(GraphJobRunner.SUBGRAPH_ID_CLASS);
       subgraphID.readFields(in);
     }
     hasMessage = in.readBoolean();

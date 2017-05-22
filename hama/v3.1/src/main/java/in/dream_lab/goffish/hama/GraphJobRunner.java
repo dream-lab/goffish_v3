@@ -36,6 +36,7 @@ import in.dream_lab.goffish.api.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hama.HamaConfiguration;
 import org.apache.hama.bsp.BSP;
@@ -78,6 +79,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   private HamaConfiguration conf;
   private Map<K, Integer> subgraphPartitionMap;
   private static Class<?> SUBGRAPH_CLASS;
+  public static Class<? extends Writable> SUBGRAPH_ID_CLASS;
   public static Class<? extends Writable> GRAPH_MESSAGE_CLASS;
   public static Class<? extends IVertex> VERTEX_CLASS;
   private static int THREAD_COUNT;
@@ -196,6 +198,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     Class<? extends IVertex> vertexClass = (Class<? extends IVertex>) conf.getClass(
             GraphJob.VERTEX_CLASS_ATTR, Vertex.class, IVertex.class);
     VERTEX_CLASS = vertexClass;
+
+    Class<? extends Writable> subgraphIDClass = (Class<? extends Writable>) conf.getClass(
+            GraphJob.SUBGRAPH_ID_CLASS_ATTR, LongWritable.class, Writable.class);
+    SUBGRAPH_ID_CLASS = subgraphIDClass;
   }
 
    
