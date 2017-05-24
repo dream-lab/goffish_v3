@@ -53,12 +53,42 @@ public class ByteArrayHelper {
         }
 
         /**
+         * Write a 1-byte
+         *
+         * @param first
+         */
+        Writer writeByte(byte b) {
+            buf.write(b);
+            return this;
+        }
+
+
+        /**
+         * Write a 2-byte short, with first byte written being the LSB and second byte
+         * written the MSB
+         *
+         * @param first
+         */
+        Writer writeShort(short first) {
+            // byte 1 (LSB)
+            byte b = (byte) (first & 0xFF);
+            buf.write(b);
+            first >>= 8;
+
+            // byte 2
+            b = (byte) (first & 0xFF);
+            buf.write(b);
+
+            return this;
+        }
+
+        /**
          * Write a 4-byte int, with first byte written being the LSB and last byte
          * written the MSB
          *
          * @param first
          */
-        void writeInt(int first) {
+        Writer writeInt(int first) {
             // byte 1 (LSB)
             byte b = (byte) (first & 0xFF);
             buf.write(b);
@@ -77,6 +107,17 @@ public class ByteArrayHelper {
             // byte 4
             b = (byte) (first & 0xFF);
             buf.write(b);
+
+            return this;
+        }
+
+        /**
+         * Write a 4-byte float. Converts to Integer bits usign Java builtin.
+         *
+         * @param first
+         */
+        Writer writeFloat(float first) {
+            return writeInt(Float.floatToIntBits(first));
         }
 
         /**
@@ -85,7 +126,7 @@ public class ByteArrayHelper {
          *
          * @param first
          */
-        void writeLong(long first) {
+        Writer writeLong(long first) {
             // byte 1 (LSB)
             byte b = (byte) (first & 0xFF);
             buf.write(b);
@@ -124,6 +165,8 @@ public class ByteArrayHelper {
             // byte 8 (MSB)
             b = (byte) (first & 0xFF);
             buf.write(b);
+
+            return this;
         }
 
         /**
@@ -132,11 +175,13 @@ public class ByteArrayHelper {
          *
          * @param items
          */
-        void writeLongs(long[] items) {
+        Writer writeLongs(long[] items) {
             writeInt(items.length);
             for (int i = 0; i < items.length; i++) {
                 writeLong(items[i]);
             }
+
+            return this;
         }
 
         /**
@@ -145,11 +190,13 @@ public class ByteArrayHelper {
          *
          * @param items
          */
-        void writeManyLongs(List<Long> items) {
+        Writer writeManyLongs(List<Long> items) {
             writeInt(items.size());
             for (Long item : items) {
                 writeLong(item);
             }
+
+            return this;
         }
 
         /**
@@ -242,13 +289,34 @@ public class ByteArrayHelper {
             val |= buf.read();
 
             // byte 2
-            val |= (((long) buf.read()) << 1 * 8);
+            val |= (((int) buf.read()) << 1 * 8);
 
             // byte 3
-            val |= (((long) buf.read()) << 2 * 8);
+            val |= (((int) buf.read()) << 2 * 8);
 
             // byte 4
-            val |= (((long) buf.read()) << 3 * 8);
+            val |= (((int) buf.read()) << 3 * 8);
+
+            return val;
+        }
+
+
+        /**
+         * reads 2 bytes of short without checking if adequate bytes are
+         * available.
+         *
+         * @return short that is formed from next 2 bytes. First byte is LSB, second
+         *         byte is MSB.
+         */
+        private short readShortUnchecked() {
+
+            short val = 0;
+
+            // byte 1
+            val |= buf.read();
+
+            // byte 2
+            val |= (((short) buf.read()) << 1 * 8);
 
             return val;
         }
@@ -264,7 +332,7 @@ public class ByteArrayHelper {
          */
         public long readLong() {
             if (buf.available() < 8) throw new ArrayIndexOutOfBoundsException(
-                    "Available bytes not enough to read 8 bytes of long, " + buf.available());
+                "Available bytes not enough to read 8 bytes of long, " + buf.available());
 
             return readLongUnchecked();
         }
@@ -280,9 +348,49 @@ public class ByteArrayHelper {
          */
         public int readInt() {
             if (buf.available() < 4) throw new ArrayIndexOutOfBoundsException(
-                    "Available bytes not enough to read 4 bytes of integer, " + buf.available());
+                "Available bytes not enough to read 4 bytes of integer, " + buf.available());
 
             return readIntUnchecked();
+        }
+
+        /**
+         * reads 4 bytes of integer after checking if adequate bytes are available.
+         *
+         * @return integer that if formed from next 4 bytes. First byte is LSB, last
+         *         byte is MSB.
+         * @throws ArrayIndexOutOfBoundsException
+         *           if 4 bytes not available in buffer
+         */
+        public short readShort() {
+            if (buf.available() < 2) throw new ArrayIndexOutOfBoundsException(
+                "Available bytes not enough to read 2 bytes of Short, " + buf.available());
+
+            return readShortUnchecked();
+        }
+
+        /**
+         * reads 1 byte from stream.
+         *
+         * @return 1 byte that  is read from stream
+         * @throws ArrayIndexOutOfBoundsException
+         *           if 1 byte not available in buffer
+         */
+        public byte readByte() {
+            int val = buf.read();
+            if (val == -1) throw new ArrayIndexOutOfBoundsException(
+                "Available bytes not enough to read 1 byte, " + buf.available());
+
+            return (byte)val;
+        }
+
+        /**
+         * Write a 4-byte float. Converts to Integer bits usign Java builtin.
+         *
+         * @param first
+         */
+        public float readFloat() {
+            int val = readInt();
+            return Float.intBitsToFloat(val);
         }
 
 
@@ -300,7 +408,7 @@ public class ByteArrayHelper {
             int count = readInt();
 
             if (buf.available() < 8 * count) throw new ArrayIndexOutOfBoundsException("Available bytes not enough to read "
-                    + count + "*8 = " + count * 8 + " bytes of longs, " + buf.available());
+                + count + "*8 = " + count * 8 + " bytes of longs, " + buf.available());
 
             long[] vals = new long[count];
             for (int i = 0; i < count; i++) {
@@ -323,7 +431,7 @@ public class ByteArrayHelper {
             int count = readInt();
 
             if (buf.available() < 8 * count) throw new ArrayIndexOutOfBoundsException("Available bytes not enough to read "
-                    + count + "*8 = " + count * 8 + " bytes of longs, " + buf.available());
+                + count + "*8 = " + count * 8 + " bytes of longs, " + buf.available());
 
             List<Long> vals = new ArrayList<Long>(count);
             for (int i = 0; i < count; i++) {

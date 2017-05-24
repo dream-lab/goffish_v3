@@ -190,18 +190,16 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     this.THREAD_COUNT = conf.getInt(GraphJob.THREAD_COUNT,
         Runtime.getRuntime().availableProcessors());
     // TODO : Add support for Richer Subgraph
-   
-    Class<M> graphMessageClass = (Class<M>) conf.getClass(
+
+    GRAPH_MESSAGE_CLASS = (Class<M>) conf.getClass(
         GraphJob.GRAPH_MESSAGE_CLASS_ATTR, IntWritable.class, Writable.class);
-    GRAPH_MESSAGE_CLASS = graphMessageClass;
 
-    Class<? extends IVertex> vertexClass = (Class<? extends IVertex>) conf.getClass(
+
+    VERTEX_CLASS = (Class<? extends IVertex>) conf.getClass(
             GraphJob.VERTEX_CLASS_ATTR, Vertex.class, IVertex.class);
-    VERTEX_CLASS = vertexClass;
 
-    Class<? extends Writable> subgraphIDClass = (Class<? extends Writable>) conf.getClass(
+    SUBGRAPH_ID_CLASS = (Class<? extends Writable>) conf.getClass(
             GraphJob.SUBGRAPH_ID_CLASS_ATTR, LongWritable.class, Writable.class);
-    SUBGRAPH_ID_CLASS = subgraphIDClass;
   }
 
    
@@ -216,28 +214,23 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
      * Creating SubgraphCompute objects
      */
     for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
-      if (initialValue != null) {
-        Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>> subgraphComputeClass = null;
-        subgraphComputeClass = (Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>>) conf
+      Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>> subgraphComputeClass;
+      subgraphComputeClass = (Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>>) conf
               .getClass(GraphJob.SUBGRAPH_COMPUTE_CLASS_ATTR, null);
+      if (subgraphComputeClass == null)
+        throw new RuntimeException("Could not load subgraph compute class");
+
+      AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphComputeRunner;
+
+      if (initialValue != null) {
         Object []params = {initialValue};
-        AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphComputeRunner = ReflectionUtils
-            .newInstance(subgraphComputeClass, params);
-        SubgraphCompute<S, V, E, M, I, J, K> subgraphComputeRunner = new SubgraphCompute<S, V, E, M, I, J, K>();
-        subgraphComputeRunner.setAbstractSubgraphCompute(abstractSubgraphComputeRunner);
-        abstractSubgraphComputeRunner.setSubgraphPlatformCompute(subgraphComputeRunner);
-        subgraphComputeRunner.setSubgraph(subgraph);
-        subgraphComputeRunner.init(this);
-        subgraphs.add(subgraphComputeRunner);
-        continue;
+        abstractSubgraphComputeRunner = ReflectionUtils.newInstance(subgraphComputeClass, params);
       }
-      
-      Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>> subgraphComputeClass = null;
-        subgraphComputeClass = (Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>>) conf
-            .getClass(GraphJob.SUBGRAPH_COMPUTE_CLASS_ATTR, null);
-      
-      AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphComputeRunner = ReflectionUtils
-          .newInstance(subgraphComputeClass);
+      else
+        abstractSubgraphComputeRunner = ReflectionUtils.newInstance(subgraphComputeClass);
+
+      // FIXME: Subgraph value is not available to user in the subgraph-compute's constructor,
+      // since it is added only after the object is created (using setSubgraph).
       SubgraphCompute<S, V, E, M, I, J, K> subgraphComputeRunner = new SubgraphCompute<S, V, E, M, I, J, K>();
       subgraphComputeRunner.setAbstractSubgraphCompute(abstractSubgraphComputeRunner);
       abstractSubgraphComputeRunner.setSubgraphPlatformCompute(subgraphComputeRunner);
