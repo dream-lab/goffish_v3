@@ -214,6 +214,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
      * Creating SubgraphCompute objects
      */
     for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
+      
       Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>> subgraphComputeClass;
       subgraphComputeClass = (Class<? extends AbstractSubgraphComputation<S, V, E, M, I, J, K>>) conf
               .getClass(GraphJob.SUBGRAPH_COMPUTE_CLASS_ATTR, null);
@@ -463,7 +464,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
    * destination e.g. subgraph, vertex etc. Also updates the messageInFlight
    * boolean.
    */
-  private void sendMessage(String peerName, Message<K, M> message) {
+  private synchronized void sendMessage(String peerName, Message<K, M> message) {
     try {
       peer.send(peerName, message);
       if (message.getControlInfo()
@@ -483,7 +484,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     }
   }
 
-  synchronized void sendMessage(K subgraphID, M message) {
+  void sendMessage(K subgraphID, M message) {
     sgMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         subgraphID, message);
@@ -493,11 +494,11 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     sendMessage(peer.getPeerName(subgraphPartitionMap.get(subgraphID)), msg);
   }
 
-  synchronized void sendToVertex(I vertexID, M message) {
+  void sendToVertex(I vertexID, M message) {
     // TODO
   }
 
-  synchronized void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
+  void sendToNeighbors(ISubgraph<S, V, E, I, J, K> subgraph, M message) {
     Set<K> sent = new HashSet<K>();
     for (IRemoteVertex<V, E, I, J, K> remotevertices : subgraph
         .getRemoteVertices()) {
@@ -509,7 +510,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     }
   }
 
-  synchronized void sendToAll(M message) {
+  void sendToAll(M message) {
     broadcastMsgSend++;
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         message);
