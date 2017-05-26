@@ -29,12 +29,13 @@ metis-input.part.pno = metis output file
 
 ### Step 4 - Place the files in hdfs
 ```sh
-$ hdfs dfs -put metis-input.txt undirected-edge-list.txt
+$ hdfs dfs -put metis-input.txt
+$ hdfs dfs -put undirected-edge-list.txt
 ```
 
 ### Step 5 - run the hadoop pipeline
 ```sh
 $ hadoop jar cc-1.0-jar-with-dependencies.jar in.dream_lab.hadoopPipeline.cc.PartitionInputReader <output-dir> 1 undirected-edge-list.txt metis-output <number-of-partitions>
 ```
-Job6 - works with FullInfoNonSplitReader - expects all vertices in same partition to be in a single file (input format = NonSplitTextInputFormat)
+Job6 - works with FullInfoNonSplitReader - expects all vertices in same partition to be in a single file (input format = NonSplitTextInputFormat)  
 Job5 - works with FullInfoSplitReader - vertices are transfered to their correct partition in first superstep
