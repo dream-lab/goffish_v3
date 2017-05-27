@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -90,7 +91,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   boolean allVotedToHalt = false, messageInFlight = false, globalVoteToHalt = false;
 
   // Stats for logging application level messages
-  long sgMsgRecv, broadcastMsgRecv, sgMsgSend, broadcastMsgSend;
+  long sgMsgRecv, broadcastMsgRecv;
+  // Thread safe data structure for keeping track of count of sent messages
+  // by each subgraph using its thread ID.
+  ConcurrentHashMap<Long, Long> sgMsgSend, broadcastMsgSend;
 
   // Track memory usage
   Runtime runtime = Runtime.getRuntime();
@@ -255,7 +259,12 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       globalVoteToHalt = (isMasterTask(peer) && getSuperStepCount() != 0) ? true : false;
       allVotedToHalt = true;
       messageInFlight = false;
-      sgMsgRecv = broadcastMsgRecv = sgMsgSend = broadcastMsgSend = 0;
+      if (LOG.isInfoEnabled()) {
+        sgMsgRecv = broadcastMsgRecv = 0;
+        sgMsgSend = new ConcurrentHashMap<>(subgraphs.size());
+        broadcastMsgSend = new ConcurrentHashMap<>(subgraphs.size());
+      }
+
       parseMessages();
 
       if (globalVoteToHalt && isMasterTask(peer)) {
@@ -296,9 +305,6 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           LOG.info("GOFFISH3.PERF.SG.COMPUTE_TIME," + subgraph.getSubgraph().getSubgraphId() + ","
                   + getSuperStepCount() + "," + curTime + "," + curTime + "," + 0);
         }
-
-        LOG.info("GOFFISH3.PERF.SG.SEND_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
-                 + "," + sgMsgSend + "," + broadcastMsgSend + "," + (sgMsgSend + broadcastMsgSend));
       }
 
       executor.shutdown();
@@ -369,10 +375,25 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
         long startTime = System.currentTimeMillis();
         subgraphComputeRunner.compute(msgs);
         long endTime = System.currentTimeMillis();
-        LOG.info("GOFFISH3.PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
-                + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
+        if (LOG.isInfoEnabled()) {
+          LOG.info("GOFFISH3.PERF.SG.COMPUTE_TIME," + subgraphComputeRunner.getSubgraph().getSubgraphId() + ","
+                  + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
+
+          // Get send message stats from the hashmap
+          Long tid = Thread.currentThread().getId();
+          Long sgMsgSendCount = sgMsgSend.get(tid);
+          // It might not have send any messages.
+          if (sgMsgSendCount == null)
+            sgMsgSendCount = new Long(0);
+          Long broadcastMsgSendCount = broadcastMsgSend.get(tid);
+          if (broadcastMsgSendCount == null)
+            broadcastMsgSendCount = new Long(0);
+
+          LOG.info("GOFFISH3.PERF.SG.SEND_MSG_COUNT," + subgraphComputeRunner.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+                  + "," + sgMsgSendCount + "," + broadcastMsgSendCount + "," + (sgMsgSendCount + broadcastMsgSendCount));
+        }
         if (!subgraphComputeRunner.hasVotedToHalt())
-          allVotedToHalt = false;
+          allVotedToHalt = false;   // Write only variable - no need to make it thread safe.
 
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -485,7 +506,16 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   void sendMessage(K subgraphID, M message) {
-    sgMsgSend++;
+    if (LOG.isInfoEnabled()) {
+      Long tid = Thread.currentThread().getId();
+      Long msgCount = sgMsgSend.get(tid);
+      if (msgCount == null) {
+        msgCount = new Long(0);
+        sgMsgSend.put(tid, msgCount);
+      }
+      sgMsgSend.put(tid, sgMsgSend.get(tid) + 1);
+    }
+
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         subgraphID, message);
     ControlMessage controlInfo = new ControlMessage();
@@ -511,7 +541,16 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
   void sendToAll(M message) {
-    broadcastMsgSend++;
+    if (LOG.isInfoEnabled()) {
+      Long tid = Thread.currentThread().getId();
+      Long msgCount = broadcastMsgSend.get(tid);
+      if (msgCount == null) {
+        msgCount = new Long(0);
+        broadcastMsgSend.put(tid, msgCount);
+      }
+      broadcastMsgSend.put(tid, broadcastMsgSend.get(tid) + 1);
+    }
+
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
         message);
     ControlMessage controlInfo = new ControlMessage();
