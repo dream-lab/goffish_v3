@@ -327,9 +327,18 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
               + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
               + (runtime.freeMemory() / mb) + "," +  (runtime.totalMemory() / mb) + ","
               + (runtime.maxMemory() / mb));
-
       peer.getCounter(GraphJobCounter.ITERATIONS).increment(1);
+      long startTime = System.currentTimeMillis();
       peer.sync();
+      long endTime = System.currentTimeMillis();
+      if (LOG.isInfoEnabled()) {
+        LOG.info("GOFFISH3.PERF.PART.SYNC," + peer.getPeerIndex() + "," + getSuperStepCount() + "," + startTime + "," +
+                endTime + "," + (endTime - startTime));
+        LOG.info("GOFFISH3.PERF.PART.SS_END_MEM_POST," + peer.getPeerIndex() + "," + getSuperStepCount() + ","
+                + ((runtime.totalMemory() - runtime.freeMemory()) / mb) + ","
+                + (runtime.freeMemory() / mb) + "," + (runtime.totalMemory() / mb) + ","
+                + (runtime.maxMemory() / mb));
+      }
 
     }
   }
