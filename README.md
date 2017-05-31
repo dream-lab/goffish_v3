@@ -28,3 +28,6 @@ Other Publications related to GoFFish include:
 - Ravikant Dindokar and Yogesh Simmhan, Elastic Partition Placement for Non-stationary Graph Algorithms, IEEE/ACM International Symposium on Cluster, Cloud, and Grid Computing (CCGrid), 2016, http://ieeexplore.ieee.org/document/7515673/
 - Badam, N.C. & Simmhan, Y., Subgraph Rank: PageRank for SubgraphCentric Distributed Graph Processing, International Conference on Management of Data (COMAD), 2014, http://dl.acm.org/citation.cfm?id=2726979
 
+
+Acknowledgements:
+- Development of GoFFish is supported by grants from NetApp Inc. and Microsoft Azure for Research
