@@ -36,7 +36,7 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
   private AbstractSubgraphComputation<S, V, E, M, I, J, K> abstractSubgraphCompute;
   long superStepCount;
   boolean voteToHalt;
-  GraphJobRunner<S, V, E, M, I, J, K> runner;
+  private GraphJobRunner<S, V, E, M, I, J, K> runner;
 
   public void init(GraphJobRunner<S, V, E, M, I, J, K> runner) {
     this.runner = runner;
@@ -83,12 +83,12 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
 
   @Override
   public void sendMessageToSubgraph(K subgraphID, M message) {
-    runner.sendMessage(subgraphID, message);
+    runner.sendMessage(subgraph.getSubgraphId(), subgraphID, message);
   }
 
   @Override
   public void sendToVertex(I vertexID, M message) {
-    runner.sendToVertex(vertexID, message);
+    runner.sendToVertex(subgraph.getSubgraphId(), vertexID, message);
   }
 
   @Override
@@ -100,7 +100,7 @@ public class SubgraphCompute<S extends Writable, V extends Writable, E extends W
 
   @Override
   public void sendToAll(M message) {
-    runner.sendToAll(message);
+    runner.sendToAll(subgraph.getSubgraphId(), message);
   }
 
   @Override

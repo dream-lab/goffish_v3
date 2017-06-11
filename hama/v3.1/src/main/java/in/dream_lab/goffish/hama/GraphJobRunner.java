@@ -91,10 +91,10 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   boolean allVotedToHalt = false, messageInFlight = false, globalVoteToHalt = false;
 
   // Stats for logging application level messages
-  long sgMsgRecv, broadcastMsgRecv;
+  Map<K, Long> sgMsgRecv, broadcastMsgRecv;
   // Thread safe data structure for keeping track of count of sent messages
-  // by each subgraph using its thread ID.
-  ConcurrentHashMap<Long, Long> sgMsgSend, broadcastMsgSend;
+  // by each subgraph using its subgraph id.
+  ConcurrentHashMap<K, Long> sgMsgSend, broadcastMsgSend;
 
   // Track memory usage
   Runtime runtime = Runtime.getRuntime();
@@ -260,7 +260,8 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       allVotedToHalt = true;
       messageInFlight = false;
       if (LOG.isInfoEnabled()) {
-        sgMsgRecv = broadcastMsgRecv = 0;
+        sgMsgRecv = new HashMap<>(subgraphs.size());
+        broadcastMsgRecv = new HashMap<>(subgraphs.size());
         sgMsgSend = new ConcurrentHashMap<>(subgraphs.size());
         broadcastMsgSend = new ConcurrentHashMap<>(subgraphs.size());
       }
@@ -292,10 +293,19 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           // if null is passed to compute it might give null pointer exception
           messagesToSubgraph = Lists.newArrayList();
         }
+        // Get stats for received messages.
+        if (LOG.isInfoEnabled()) {
+          Long sgMsg = sgMsgRecv.get(subgraph.getSubgraph().getSubgraphId());
+          if (sgMsg == null)
+            sgMsg = new Long(0);
 
-        LOG.info("GOFFISH3.PERF.SG.RECV_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
-                + "," + sgMsgRecv + "," + broadcastMsgRecv + "," + (sgMsgRecv + broadcastMsgRecv));
+          Long broadMsg = broadcastMsgRecv.get(subgraph.getSubgraph().getSubgraphId());
+          if (broadMsg == null)
+            broadMsg = new Long(0);
 
+          LOG.info("GOFFISH3.PERF.SG.RECV_MSG_COUNT," + subgraph.getSubgraph().getSubgraphId() + "," + getSuperStepCount()
+                  + "," + sgMsg + "," + broadMsg + "," + (sgMsg + broadMsg));
+        }
         if (!subgraph.hasVotedToHalt() || hasMessages) {
           executor.execute(new ComputeRunnable(subgraph, messagesToSubgraph));
           subgraphsExecutedThisSuperstep++;
@@ -389,12 +399,12 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
                   + getSuperStepCount() + "," + startTime + "," + endTime + "," + (endTime - startTime));
 
           // Get send message stats from the hashmap
-          Long tid = Thread.currentThread().getId();
-          Long sgMsgSendCount = sgMsgSend.get(tid);
+          Long sgMsgSendCount = sgMsgSend.get(subgraphComputeRunner.getSubgraph().getSubgraphId());
           // It might not have send any messages.
           if (sgMsgSendCount == null)
             sgMsgSendCount = new Long(0);
-          Long broadcastMsgSendCount = broadcastMsgSend.get(tid);
+
+          Long broadcastMsgSendCount = broadcastMsgSend.get(subgraphComputeRunner.getSubgraph().getSubgraphId());
           if (broadcastMsgSendCount == null)
             broadcastMsgSendCount = new Long(0);
 
@@ -432,24 +442,34 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     while ((message = peer.getCurrentMessage()) != null) {
       // Broadcast message, therefore every subgraph receives it
       if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.BROADCAST) {
-        broadcastMsgRecv++;
         for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
           List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(subgraph.getSubgraphId());
+          Long broadMsg = broadcastMsgRecv.get(subgraph.getSubgraphId());
           if (subgraphMessage == null) {
             subgraphMessage = new ArrayList<IMessage<K, M>>();
             subgraphMessageMap.put(subgraph.getSubgraphId(), subgraphMessage);
           }
+          if (broadMsg == null) {
+            broadMsg = new Long(0);
+            broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg);
+          }
           subgraphMessage.add(message);
+          broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg + 1);
         }
       }
       else if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.NORMAL) {
-        sgMsgRecv++;
         List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(message.getSubgraphId());
+        Long sgMsg = sgMsgRecv.get(message.getSubgraphId());
         if (subgraphMessage == null) {
           subgraphMessage = new ArrayList<IMessage<K, M>>();
           subgraphMessageMap.put(message.getSubgraphId(), subgraphMessage);
         }
+        if (sgMsg == null) {
+          sgMsg = new Long(0);
+          sgMsgRecv.put(message.getSubgraphId(), sgMsg);
+        }
         subgraphMessage.add(message);
+        sgMsgRecv.put(message.getSubgraphId(), sgMsg + 1);
       }
       else if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.GLOBAL_HALT) {
         globalVoteToHalt = true;
@@ -514,26 +534,25 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
     }
   }
 
-  void sendMessage(K subgraphID, M message) {
+  void sendMessage(K fromSGID, K toSGID, M message) {
     if (LOG.isInfoEnabled()) {
-      Long tid = Thread.currentThread().getId();
-      Long msgCount = sgMsgSend.get(tid);
+      Long msgCount = sgMsgSend.get(fromSGID);
       if (msgCount == null) {
         msgCount = new Long(0);
-        sgMsgSend.put(tid, msgCount);
+        sgMsgSend.put(fromSGID, msgCount);
       }
-      sgMsgSend.put(tid, sgMsgSend.get(tid) + 1);
+      sgMsgSend.put(fromSGID, msgCount + 1);
     }
 
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
-        subgraphID, message);
+            toSGID, message);
     ControlMessage controlInfo = new ControlMessage();
     controlInfo.setTransmissionType(IControlMessage.TransmissionType.NORMAL);
     msg.setControlInfo(controlInfo);
-    sendMessage(peer.getPeerName(subgraphPartitionMap.get(subgraphID)), msg);
+    sendMessage(peer.getPeerName(subgraphPartitionMap.get(toSGID)), msg);
   }
 
-  void sendToVertex(I vertexID, M message) {
+  void sendToVertex(K fromSGID, I vertexID, M message) {
     // TODO
   }
 
@@ -544,20 +563,19 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       K neighbourID = remotevertices.getSubgraphId();
       if (!sent.contains(neighbourID)) {
         sent.add(neighbourID);
-        sendMessage(neighbourID, message);
+        sendMessage(subgraph.getSubgraphId(), neighbourID, message);
       }
     }
   }
 
-  void sendToAll(M message) {
+  void sendToAll(K fromSGID, M message) {
     if (LOG.isInfoEnabled()) {
-      Long tid = Thread.currentThread().getId();
-      Long msgCount = broadcastMsgSend.get(tid);
+      Long msgCount = broadcastMsgSend.get(fromSGID);
       if (msgCount == null) {
         msgCount = new Long(0);
-        broadcastMsgSend.put(tid, msgCount);
+        broadcastMsgSend.put(fromSGID, msgCount);
       }
-      broadcastMsgSend.put(tid, broadcastMsgSend.get(tid) + 1);
+      broadcastMsgSend.put(fromSGID, msgCount + 1);
     }
 
     Message<K, M> msg = new Message<K, M>(Message.MessageType.CUSTOM_MESSAGE,
