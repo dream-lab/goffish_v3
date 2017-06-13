@@ -38,6 +38,22 @@ public interface ISubgraph<S extends Writable, V extends Writable, E extends Wri
   long getVertexCount();
 
   long getLocalVertexCount();
+  
+  long getRemoteVertexCount();
+  
+  long getLocalEdgeCount();
+  
+  long getBoundaryEdgeCount();
+  
+  long getBoundaryVertexCount();
+  
+  Iterable<IVertex<V,E,I,J>> getBoundaryVertices();
+  
+  Iterable<IEdge<E,I,J>> getBoundaryEdges();
+  
+  Iterable<IEdge<E,I,J>> getLocalOutEdges();
+  
+  Iterable<IEdge<E,I,J>> getRemoteOutEdges();
 
   Iterable<IVertex<V, E, I, J>> getVertices();
 
