@@ -153,4 +153,62 @@ public class Subgraph<S extends Writable, V extends Writable, E extends Writable
     }
     return edgeList;
   }
+  public Iterable<IEdge<E, I, J>> getBoundaryEdges() {
+    List<IEdge<E,I,J>> boundaryEdge = new ArrayList<>();
+    for (IVertex<V, E, I, J> localVertex : _localVertexMap.values()) {
+      for(IEdge<E, I, J> temp : localVertex.getOutEdges()) {
+        if(!_localVertexMap.values().contains(temp.getSinkVertexId().getClass()))
+          boundaryEdge.add(temp);
+      }
+    }
+    return boundaryEdge;
+  }
+  public Iterable<IVertex<V,E,I,J>> getBoundaryVertices() {
+   HashSet <IVertex<V, E, I, J>> boundaryVertices = new HashSet<>();
+    for (IVertex<V, E, I, J> localVertex : _localVertexMap.values()) {
+      for(IEdge<E, I, J> temp : localVertex.getOutEdges()) {
+        if(!_localVertexMap.values().contains(temp.getSinkVertexId().getClass())) {
+          boundaryVertices.add(localVertex);
+          break;
+        }
+      }
+    }
+    return boundaryVertices;
+  }
+  public long getBoundaryEdgeCount() {
+    List<IEdge<E,I,J>> boundaryEdge;
+    boundaryEdge= (List<IEdge<E, I, J>>) getBoundaryEdges();
+    return boundaryEdge.size();
+  }
+  public long getBoundaryVertexCount() {
+    HashSet <IVertex<V, E, I, J>> boundaryVertices;
+    boundaryVertices= (HashSet<IVertex<V, E, I, J>>) getBoundaryVertices();
+    return boundaryVertices.size();
+  }
+  public Iterable<IEdge<E, I, J>> getRemoteOutEdges() {
+    List<IEdge<E,I,J>> remoteEdges = new ArrayList<>();
+    for (IVertex<V, E, I, J> vertex : _remoteVertexMap.values()) {
+      for(IEdge<E, I, J> temp : vertex.getOutEdges()) {
+        remoteEdges.add(temp);
+      }
+    }
+    return remoteEdges;
+  }
+  public Iterable<IEdge<E, I, J>> getLocalOutEdges() {
+    List<IEdge<E,I,J>> localEdge = new ArrayList<>();
+    for (IVertex<V, E, I, J> vertex : _localVertexMap.values()) {
+      for(IEdge<E, I, J> temp : vertex.getOutEdges()) {
+        localEdge.add(temp);
+      }
+    }
+    return localEdge;
+  }
+  public long getLocalEdgeCount() {
+    List<IEdge<E, I, J>> edgeList;
+    edgeList= (List<IEdge<E, I, J>>)getLocalOutEdges();
+    return edgeList.size();
+  }
+  public long getRemoteVertexCount() {
+    return _remoteVertexMap.size();
+  }
 }
