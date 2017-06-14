@@ -53,8 +53,6 @@ public interface ISubgraph<S extends Writable, V extends Writable, E extends Wri
   
   Iterable<IEdge<E,I,J>> getLocalOutEdges();
   
-  Iterable<IEdge<E,I,J>> getRemoteOutEdges();
-
   Iterable<IVertex<V, E, I, J>> getVertices();
 
   Iterable<IVertex<V, E, I, J>> getLocalVertices();
