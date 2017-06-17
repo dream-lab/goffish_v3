@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.*;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -107,9 +108,12 @@ public class CCReducer extends Reducer< LongWritable, Text,Text,Text> {
 		
 	LocalVertex.clear();
 		
-		ConnectedComponents cc= new ConnectedComponents();
+	//	ConnectedComponents cc= new ConnectedComponents();
+		ConnectedComponentsNew cc= new ConnectedComponentsNew();
 		//System.out.println("TEST: START : call to connected components");
-		Map<Long,Integer> SubgraphMapping = cc.findCC(AdjMatrix); // TODO: pass adjMat //TODO : the subgraphId will be an integer but will be written as Long
+		//Map<Long,Integer> SubgraphMapping = cc.findCC(AdjMatrix); // TODO: pass adjMat //TODO : the subgraphId will be an integer but will be written as Long
+		Map<Long,Integer> SubgraphMapping = cc.findWeak(AdjMatrix); // TODO: pass adjMat //TODO : the subgraphId will be an integer but will be written as Long
+                //System.out.println("In Partition " + key.get() + " " + SubgraphMapping.keySet().size() + " vertices were assigned a subgraphid");
 		//System.out.println("TEST: END : call to connected components");
 	//	LocalAdjMatrix.clear(); // TODO: remove
 		//Form subgraph ID using partition ID
@@ -134,9 +138,12 @@ public class CCReducer extends Reducer< LongWritable, Text,Text,Text> {
 		StringBuilder reduceValue=new StringBuilder();
 		StringBuilder localEdges=new StringBuilder();
 		StringBuilder remoteEdges=new StringBuilder();
-		
+//		long countv = 0L;
+//                long countl = 0L;
+//                long countr = 0L;
+//                Set<Integer> subgraphs = new HashSet<Integer>(SubgraphMapping.values());
 		for(Long vertex : SubgraphMapping.keySet()){
-		
+//		countv++;
 		reduceKey.setLength(0);
 		reduceValue.setLength(0);
 		localEdges.setLength(0);
@@ -166,12 +173,14 @@ public class CCReducer extends Reducer< LongWritable, Text,Text,Text> {
 												
 				if(!(entry.getValue().checkRemote())){
 					// Add this to local edges
+//					countl++;
 					localEdges.append(postfix).append(entry.getKey()).append(":").append(entry.getValue().getEdgeId());
 					//edges.append(postfix).append(0).append(":").append(entry.getKey()).append(":").append(entry.getValue().getEdgeId());
 					postfix =",";
 					
 				}else{
 					//Add this to remote edges
+//					countr++;
 					remoteEdges.append(postfix).append(entry.getKey()).append(":").append(entry.getValue().getEdgeId());
 					//edges.append(postfix).append(1).append(":").append(entry.getKey()).append(":").append(entry.getValue().getEdgeId());
 					postfix =",";
@@ -196,6 +205,11 @@ public class CCReducer extends Reducer< LongWritable, Text,Text,Text> {
 		}
 		
 	}
+
+//                System.out.println("Partition Id" + key.get() + " Vertex Count: " + countv);
+//                System.out.println("Partition Id" + key.get() + " Local Edge Count: " + countl);
+//                System.out.println("Partition Id" + key.get() + " Remote Edge Count: " + countr);
+//                System.out.println("Partition Id" + key.get() + " Subgraph Count: " + subgraphs.size());
 		SubgraphMapping.clear();
 		AdjMatrix.clear();
 		reduceKey.setLength(0);

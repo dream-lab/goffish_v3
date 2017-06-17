@@ -48,7 +48,7 @@ public class PALReducer extends Reducer< LongWritable, Text,Text,Text> {
 			   //System.out.println("Adjlist "+adjList);
 		   }
 	}
-		
+//		System.out.println("Job 2 Edge Count: " + sb.toString() + "," + adjList);
 		sb.append(key).append("#").append(partitionId);
 		context.write(new Text(sb.toString()), new Text(adjList));
 		

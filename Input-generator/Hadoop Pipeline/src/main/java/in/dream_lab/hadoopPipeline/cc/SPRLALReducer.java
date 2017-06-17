@@ -30,6 +30,9 @@ public class SPRLALReducer extends Reducer< LongWritable, Text,Text,Text>  {
 		String PartitionSubgraphID="";
 		String PartitionID = "";
 		String SubgraphID = "";
+//                long counts = 0L;
+//                long countl = 0L;
+//                long countr = 0L;
 		// input SPRSALFileMapper V 1*V_rem : E_rem : P_rem : SG_rem
 		for(Text v: values){
 			String mapValue=v.toString();
@@ -45,6 +48,7 @@ public class SPRLALReducer extends Reducer< LongWritable, Text,Text,Text>  {
 		                String outputValue = inputValueArr[0] + " " + inputValueArr[3] + " " + inputValueArr[2];
 				
 				remoteEdges.append(" ").append(outputValue);
+//                                countr++;
 			}else{//Local edges
 				
 				//emit  from SPLALFileMapper  P_id V_id SG_id <V_loc SG_id P_id>,+
@@ -56,6 +60,7 @@ public class SPRLALReducer extends Reducer< LongWritable, Text,Text,Text>  {
 				PartitionSubgraphID=LocalEdgeRecord[0];
 				PartitionID = PartitionSubgraphID.split("#")[0];
 				SubgraphID = PartitionSubgraphID.split("#")[1];
+//				System.out.println("Subgraph ID:" + SubgraphID);
 				if(!LocalEdgeRecord[1].isEmpty()){
 				for(String edge: LocalEdgeRecord[1].split(",")){
 					if(!edge.isEmpty()){
@@ -63,12 +68,14 @@ public class SPRLALReducer extends Reducer< LongWritable, Text,Text,Text>  {
 					  String SinkID = edge.split(":")[0];
 					  
 					localEdges.append(" ").append(SinkID).append(" ").append(SubgraphID).append(" ").append(PartitionID); }
+//              				countl++;
 					
 				}
 			}
 			}
 		}
-		
+//		System.out.println("Remote Edge Count:" + countr);
+//                System.out.println("Local Edge Count:" + countl);
 		//local and remote edge objects have a preceding space so we dont need to give extra spaces
 		context.write(new Text(PartitionID), new Text(key.toString()+" "+SubgraphID+localEdges.toString()+remoteEdges.toString()));
 		

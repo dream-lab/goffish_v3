@@ -41,10 +41,16 @@ public class MakeGraphUndirectedReducer extends Reducer< LongWritable, LongWrita
 		*/
 		LongWritable sourceId=key;
 		Set<Long> adjlist = new HashSet<Long>();
+//		long i = 0;
 		for(LongWritable v : values){
 			adjlist.add(v.get());
+//			i++;
+//			if ((i % 1000) == 0) {
+//				System.out.println("Processed " + i + "values");
+//			}
 		}
 		
+//		System.out.println("Job 1 Edge count: " + sourceId.get() + "," + adjlist.size());
 				
 		long taskId=context.getTaskAttemptID().getTaskID().getId();
 		
