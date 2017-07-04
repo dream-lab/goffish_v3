@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: in.dream_lab.goffish:goffish-api:3.1">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/repository/in/dream_lab/goffish/goffish-api/3.1/goffish-api-3.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/repository/in/dream_lab/goffish/goffish-api/3.1/goffish-api-3.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/repository/in/dream_lab/goffish/goffish-api/3.1/goffish-api-3.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
