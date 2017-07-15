@@ -142,7 +142,7 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
           for (IEdge<E, I, J> e : v.getOutEdges()) {
             edgeDegree++;
             IVertex<V, E, I, J> adjVertex = subgraph.getVertexById(e.getSinkVertexId());
-            if (adjVertex.isRemote()) {
+            if (adjVertex != null && adjVertex.isRemote()) {
               isBoundary = true;
               remoteEdgeCount++;
               K adjSgid = ((IRemoteVertex<V, E, I, J, K>)adjVertex).getSubgraphId();
@@ -444,32 +444,37 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
       if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.BROADCAST) {
         for (ISubgraph<S, V, E, I, J, K> subgraph : partition.getSubgraphs()) {
           List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(subgraph.getSubgraphId());
-          Long broadMsg = broadcastMsgRecv.get(subgraph.getSubgraphId());
           if (subgraphMessage == null) {
             subgraphMessage = new ArrayList<IMessage<K, M>>();
             subgraphMessageMap.put(subgraph.getSubgraphId(), subgraphMessage);
           }
-          if (broadMsg == null) {
-            broadMsg = new Long(0);
-            broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg);
-          }
-          subgraphMessage.add(message);
-          broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg + 1);
+	  subgraphMessage.add(message);
+    	  if (LOG.isInfoEnabled()) {
+	    Long broadMsg = broadcastMsgRecv.get(subgraph.getSubgraphId());
+            if (broadMsg == null) {
+              broadMsg = new Long(0);
+              broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg);
+            }
+            broadcastMsgRecv.put(subgraph.getSubgraphId(), broadMsg + 1);
+	  }
         }
       }
       else if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.NORMAL) {
         List<IMessage<K, M>> subgraphMessage = subgraphMessageMap.get(message.getSubgraphId());
-        Long sgMsg = sgMsgRecv.get(message.getSubgraphId());
         if (subgraphMessage == null) {
           subgraphMessage = new ArrayList<IMessage<K, M>>();
           subgraphMessageMap.put(message.getSubgraphId(), subgraphMessage);
         }
-        if (sgMsg == null) {
-          sgMsg = new Long(0);
-          sgMsgRecv.put(message.getSubgraphId(), sgMsg);
-        }
-        subgraphMessage.add(message);
-        sgMsgRecv.put(message.getSubgraphId(), sgMsg + 1);
+	subgraphMessage.add(message);
+
+    	if (LOG.isInfoEnabled()) {
+	  Long sgMsg = sgMsgRecv.get(message.getSubgraphId());
+          if (sgMsg == null) {
+    	    sgMsg = new Long(0);
+            sgMsgRecv.put(message.getSubgraphId(), sgMsg);
+          }
+          sgMsgRecv.put(message.getSubgraphId(), sgMsg + 1);
+	}
       }
       else if (((Message<K, M>) message).getControlInfo().getTransmissionType() == IControlMessage.TransmissionType.GLOBAL_HALT) {
         globalVoteToHalt = true;
@@ -609,3 +614,4 @@ public final class GraphJobRunner<S extends Writable, V extends Writable, E exte
   }
 
 }
+
