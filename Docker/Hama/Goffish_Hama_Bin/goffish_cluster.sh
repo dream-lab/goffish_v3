@@ -18,7 +18,7 @@ elif [ $1 == "start" ]; then
        sudo docker stack deploy --compose-file=docker-compose.yml hama_bin_cluster
    fi
 elif [ $1 == "scale" ]; then
-   docker service scale hama_cluster_datanode=$2
+   docker service scale hama_bin_cluster_datanode=$2
 elif [ $1 == "login" ]; then
    X=`docker ps | grep -oh "\w*namenode.*"`
    docker exec -it $X /bin/bash --login
