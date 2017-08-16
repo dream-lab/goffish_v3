@@ -13,7 +13,6 @@ Follow these steps to build the image
     
     curl -LO http://ftp.jaist.ac.jp/pub/apache/hadoop/core/hadoop-2.7.1/hadoop-2.7.1.tar.gz
     
-    curl -LO 'http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-linux-x64.rpm' -H 'Cookie: oraclelicense=accept-securebackup-cookie'
 
     ```
 
