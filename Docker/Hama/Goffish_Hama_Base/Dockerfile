@@ -23,10 +23,8 @@ RUN ssh-keygen -q -N "" -t dsa -f /etc/ssh/ssh_host_dsa_key && \
     cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys
 
 # java
-ADD jdk-8u73-linux-x64.rpm /tmp/
-RUN rpm -i /tmp/jdk-8u73-linux-x64.rpm && \
-    rm /tmp/jdk-8u73-linux-x64.rpm
 
+RUN yum install -y java-1.8.0-openjdk-devel;yum clean all 
 
 # hadoop
 ADD hadoop-2.7.1.tar.gz /usr/local/
@@ -43,12 +41,12 @@ ENV HADOOP_PREFIX=/usr/local/hadoop \
     HADOOP_YARN_HOME=/usr/local/hadoop \
     HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop \
     YARN_CONF_DIR=$HADOOP_PREFIX/etc/hadoop \
-    JAVA_HOME=/usr/java/default \
+    JAVA_HOME=/usr/lib/jvm/java-1.8.0 \
     TERM=xterm
  
 ENV PATH=$PATH:$JAVA_HOME/bin:$HADOOP_HDFS_HOME/bin:.
 
-RUN sed -i '/^export JAVA_HOME/ s:.*:export JAVA_HOME=/usr/java/default\nexport HADOOP_PREFIX=/usr/local/hadoop\nexport HADOOP_HOME=/usr/local/hadoop\n:' $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh && \
+RUN sed -i '/^export JAVA_HOME/ s:.*:export JAVA_HOME=/usr/lib/jvm/java-1.8.0\nexport HADOOP_PREFIX=/usr/local/hadoop\nexport HADOOP_HOME=/usr/local/hadoop\n:' $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh && \
     sed -i '/^export HADOOP_CONF_DIR/ s:.*:export HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop/:' $HADOOP_PREFIX/etc/hadoop/hadoop-env.sh && \
     mkdir $HADOOP_PREFIX/input && \
     cp $HADOOP_PREFIX/etc/hadoop/*.xml $HADOOP_PREFIX/input
