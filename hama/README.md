@@ -83,7 +83,7 @@ Follow the steps to install GoFFish
 
 5. **Writing custom application**
 
-   Your application has to extend [AbstractSubgraphComputation.java](https://github.com/dream-lab/goffish_v3/blob/master/api/src/main/java/in/dream_lab/goffish/api/AbstractSubgraphComputation.java) and implement the compute function. The job configuration (equivalent of driver class in MapReduce)  can be written in the form of properties file or as a Java class. See [DefaultJob.java](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/DefaultJob.java) and [ConnectedComponents.properties](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/ConnectedComponents.properties) for more details.
+   Your application has to extend [AbstractSubgraphComputation.java](https://github.com/dream-lab/goffish_v3/blob/master/goffish-api/src/main/java/in/dream_lab/goffish/api/AbstractSubgraphComputation.java) and implement the compute function. The job configuration (equivalent of driver class in MapReduce)  can be written in the form of properties file or as a Java class. See [DefaultJob.java](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/DefaultJob.java) and [ConnectedComponents.properties](https://github.com/dream-lab/goffish_v3/blob/master/hama/v3.1/src/main/java/in/dream_lab/goffish/job/ConnectedComponents.properties) for more details.
 
    Add the following dependencies to your project in pom.xml:
 
